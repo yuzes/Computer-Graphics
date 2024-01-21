@@ -50,5 +50,9 @@ class Ray {
     direction = new PVector(dx, dy, dz);
   }
   
+  String toString(){
+    return "Origin: " + this.origin + " Direction: " + this.direction;
+  }
+  
   // Other methods and functionalities can be added as needed
 }

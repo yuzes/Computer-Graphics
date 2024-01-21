@@ -94,17 +94,13 @@ void reset_scene() {
 // This is where you should put your code for creating eye rays and tracing them.
 void draw_scene(Scene s) {
   colorMode(RGB, 255, 255, 255);
+  debug_flag = false;
   for(int y = 0; y < height; y++) {
     for(int x = 0; x < width; x++) {
       
       // Maybe set debug flag true for ONE pixel.
       // Have your routines (like ray/triangle intersection) 
       // print information when this flag is set.
-      debug_flag = false;
-      if (x == 150 && y == 150){
-        debug_scene = s;
-        debug_flag = true;
-      }
 
       color color_c = castRay(x, y, s);
       
@@ -114,26 +110,28 @@ void draw_scene(Scene s) {
     }
   }
   debug_flag = true;
+  debug_scene = s;
 }
 
 color castRay(int x, int y, Scene s){
   // create and cast an eye ray in order to calculate the pixel color
   float k = tan(radians(s.fov*0.5));
   float x_p = (x - width/2) * 2 * k / width;
-  float y_p = (height - y - height/2) * 2 * k / height;
+  float y_p = (height/2 - y) * 2 * k / height;
   float z_p = -1;
   Ray r = new Ray(0.0, 0.0, 0.0, x_p, y_p, z_p);
   color color_c = s.background_color;
+  float nearest_z = -Float.MAX_VALUE;
   for(int i = 0; i < s.triangles.size(); i++) {
-    if(debug_flag)
-      println(s.triangles.size() + " triangles ");
     Triangle tri = s.triangles.get(i);
     PVector P = rayTriangleIntersection(r, tri);
     if(P.z > z_p) {
-      if(debug_flag)
-        println("No Triangle intersection at : " + x + ", " + y + " , P.z = " + P.z);
+      continue;
+    }
+    if(P.z < nearest_z){
       break;
     }
+    nearest_z = max(P.z, nearest_z);
     PVector L = s.light_position.copy().sub(P).normalize();
     PVector N = tri.N;
     //float NDL = max(N.dot(L), 0);
@@ -144,7 +142,7 @@ color castRay(int x, int y, Scene s){
     int light_green = (s.light_color >> 8) & 0xFF;
     int light_blue = (s.light_color) & 0xFF;
     float NDL = max(N.dot(L), 0);
-    color_c = color(surface_red * light_red * NDL, surface_green * light_green * NDL, surface_blue * light_blue * NDL);
+    color_c = color(surface_red * light_red * NDL / 255, surface_green * light_green * NDL / 255, surface_blue * light_blue * NDL / 255);
   }
   return color_c;
 }
@@ -161,13 +159,16 @@ PVector rayTriangleIntersection(Ray r, Triangle tri){
   float c = N.z;
   float d = -(a * A.x + b * A.y + c * A.z);
   //calculate t and find intersection of ray and plane
-  float t = -d / (a * r.direction.x + b * r.direction.y + c * r.direction.z);
-  PVector P = r.direction.mult(t);
+  float plane = a * r.direction.x + b * r.direction.y + c * r.direction.z;
+  if(plane == 0)
+    return new PVector(0,0,0);
+  float t = -d / plane;
+  PVector P = r.direction.copy().mult(t);
   if (P.dot(tri.N) > 0) tri.N.mult(-1);
-  if(debug_flag){
-    println("Ray Plane intersect at : " + P);
-    println("\tSurface Normal: " + tri.N);
-  }
+  //if(debug_flag){
+  //  println("Ray Plane intersect at : " + r.direction + "*" + t);
+  //  println("\tSurface Normal: " + tri.N);
+  //}
   if(insideTriangle(A, B, C, tri.N, P)){
     return P;
   }else {
@@ -175,12 +176,11 @@ PVector rayTriangleIntersection(Ray r, Triangle tri){
   }
 }
 
-
 // return true if P is inside triangle ABC
 boolean insideTriangle(PVector A, PVector B, PVector C, PVector N, PVector P){
   boolean side1 = side(A, B, N, P);
-  boolean side2 = side(A, C, N, P);
-  boolean side3 = side(B, C, N, P);
+  boolean side2 = side(B, C, N, P);
+  boolean side3 = side(C, A, N, P);
   return side1 == side2 && side2 == side3;
 }
 
@@ -190,12 +190,12 @@ boolean side(PVector O, PVector X, PVector N, PVector P){
   PVector OX = X.copy().sub(O);
   PVector OP = P.copy().sub(O);
   PVector cross = OX.cross(OP);
-  return N.dot(cross) >= 0;
+  return N.dot(cross) > 0;
 }
 
 // prints mouse location clicks, for help in debugging
 void mousePressed() {
-  println ("You pressed the mouse at " + mouseX + " " + mouseY);
+  println ("\nYou pressed the mouse at " + mouseX + " " + mouseY);
   if(debug_scene != null){
     castRay(mouseX, mouseY, debug_scene);
   }
