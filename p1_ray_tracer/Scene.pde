@@ -35,7 +35,7 @@ class Triangle{
     this.surface_color = other.surface_color;
     this.vertices = new ArrayList<PVector>();
     for(int i = 0; i < other.vertices.size(); i++){
-      this.vertices.add(other.vertices.get(i)); 
+      this.vertices.add(other.vertices.get(i).copy()); 
     }
   }
 }
