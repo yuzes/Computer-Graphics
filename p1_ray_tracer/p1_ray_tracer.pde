@@ -63,6 +63,13 @@ void interpreter(String file) {
     }
     else if (token[0].equals("end")) {
       Triangle tri = new Triangle(buffer);
+      PVector A = tri.vertices.get(0);
+      PVector B = tri.vertices.get(1);
+      PVector C = tri.vertices.get(2);
+      PVector AB = PVector.sub(B, A);
+      PVector AC = PVector.sub(C, A);
+      PVector N = AB.cross(AC).normalize(); // a, b, c
+      tri.N = N.copy();
       scene.addTriangle(tri);
       buffer = new Triangle();
     }
@@ -84,6 +91,7 @@ void reset_scene() {
 
 // This is where you should put your code for creating eye rays and tracing them.
 void draw_scene(Scene s) {
+  colorMode(RGB, 255, 255, 255);
   for(int y = 0; y < height; y++) {
     for(int x = 0; x < width; x++) {
       
@@ -101,29 +109,73 @@ void draw_scene(Scene s) {
       float z_p = -1;
       
       Ray r = new Ray(0.0, 0.0, 0.0, x_p, y_p, z_p);
+      color color_c = s.background_color;
       for(int i = 0; i < s.triangles.size(); i++) {
-        Triangle tr = s.triangles.get(i);
-        //calculate plane of triangle and get a, b, c and d
-        PVector A = tr.vertices.get(0);
-        PVector B = tr.vertices.get(1);
-        PVector C = tr.vertices.get(2);
-        PVector AB = PVector.sub(B, A);
-        PVector AC = PVector.sub(C, A);
-        PVector N = AB.cross(AC).normalize(); // a, b, c
-        float a = N.x;
-        float b = N.y;
-        float c = N.z;
-        float d = -(a * A.x + b * A.y + c * A.z);
-        
-        //calculate t and find intersection of ray and plane
-        float t = -d / (a * x_p + b * y_p + c * z_p); 
+        Triangle tri = s.triangles.get(i);
+        PVector P = rayTriangleIntersection(r, tri);
+        if(P.z == 0) {
+          println("No intersection at : " + x + ", " + y);
+          break;
+        }
+        PVector L = s.light_position.sub(P).normalize();
+        PVector N = tri.N;
+        //float NDL = max(N.dot(L), 0);
+        int surface_red = tri.surface_color >> 16 & 0xFF;
+        int surface_green = tri.surface_color >> 8 & 0xFF;
+        int surface_blue = tri.surface_color & 0XFF;
+        int light_red = (s.light_color >> 16) & 0xFF;
+        int light_green = (s.light_color >> 8) & 0xFF;
+        int light_blue = (s.light_color) & 0xFF;
+        float NDL = max(N.dot(L), 0);
+        color_c = color(surface_red * light_red * NDL, surface_green * light_green * NDL, surface_blue * light_blue * NDL);
       }
       
       // set the pixel color
-      color c = color(150, 150, 250);  // you should use the correct pixel color here
+      color c = color_c;  // you should use the correct pixel color here
       set (x, y, c);                   // make a tiny rectangle to fill the pixel
     }
   }
+}
+
+// calculate intersection between ray and triangle, return point at which ray and triangle intersect
+PVector rayTriangleIntersection(Ray r, Triangle tri){
+  //calculate plane of triangle and get a, b, c and d
+  PVector A = tri.vertices.get(0);
+  PVector B = tri.vertices.get(1);
+  PVector C = tri.vertices.get(2);
+  PVector N = tri.N; // a, b, c
+  float a = N.x;
+  float b = N.y;
+  float c = N.z;
+  float d = -(a * A.x + b * A.y + c * A.z);
+  //calculate t and find intersection of ray and plane
+  float t = -d / (a * r.direction.x + b * r.direction.y + c * r.direction.z);
+  PVector P = r.direction.mult(t);
+  if (P.dot(N) > 0) tri.N.mult(-1);
+  if(insideTriangle(A, B, C, N, P)){
+    return P;
+  }else {
+    return new PVector(0,0,0);
+  }
+}
+
+
+// return true if P is inside triangle ABC
+boolean insideTriangle(PVector A, PVector B, PVector C, PVector N, PVector P){
+  boolean side1 = side(A, B, N, P);
+  boolean side2 = side(A, C, N, P);
+  boolean side3 = side(B, C, N, P);
+  
+  return side1 == side2 && side2 == side3;
+}
+
+
+// return whether OX cross OP has the same side as ON
+boolean side(PVector O, PVector X, PVector N, PVector P){
+  PVector OX = X.sub(O);
+  PVector OP = P.sub(O);
+  PVector cross = OX.cross(OP);
+  return N.dot(cross) >= 0;
 }
 
 // prints mouse location clicks, for help in debugging

@@ -18,6 +18,7 @@ class Scene {
 class Triangle{
   ArrayList<PVector> vertices;
   color surface_color;
+  PVector N; // surface normal
   
   Triangle(PVector v1, PVector v2, PVector v3) {
      this.vertices = new ArrayList<PVector> ();
