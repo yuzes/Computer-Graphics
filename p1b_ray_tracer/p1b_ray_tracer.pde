@@ -7,6 +7,7 @@ boolean debug_flag = false;
 
 Scene debug_scene = null;
 Scene current_scene = null;
+color surface_color = color(0,0,0);
 
 void setup() {
   size (300, 300);  
@@ -21,6 +22,8 @@ void keyPressed() {
     case '2': interpreter("s2.cli"); break;
     case '3': interpreter("s3.cli"); break;
     case '4': interpreter("s4.cli"); break;
+    case '5': interpreter("s5.cli"); break;
+    case '6': interpreter("s6.cli"); break;
   }
 }
 
@@ -33,10 +36,11 @@ void interpreter(String file) {
     println ("Error! Failed to read the file.");
     return;
   }
-  if(current_scene == null)
+  if(current_scene == null){
     current_scene = new Scene();
+    current_scene.name = file;
+  }
   Triangle buffer = new Triangle();
-  color surface_color = color(0,0,0);
   colorMode(RGB, 1.0);
   for (int i = 0; i < str.length; i++) {
     
@@ -63,7 +67,14 @@ void interpreter(String file) {
       buffer.surface_color = surface_color;
     }
     else if (token[0].equals("vertex")) {
-      buffer.vertices.add(new PVector(float(token[1]), float(token[2]), float(token[3])));
+      Matrix point = new Matrix(new float[][] {
+                             {float(token[1])},
+                             {float(token[2])},
+                             {float(token[3])},
+                             {1.0f}});
+      Matrix C = current_scene.stack.peek();
+      Matrix transform_point = C.mult(point);
+      buffer.vertices.add(new PVector(transform_point.get(0,0), transform_point.get(1,0), transform_point.get(2,0)));
     }
     else if (token[0].equals("end")) {
       Triangle tri = new Triangle(buffer);
@@ -79,20 +90,17 @@ void interpreter(String file) {
     }else if(token[0].equals("read")){
       interpreter(token[1]);
     }else if(token[0].equals("push")){
-    
-    
+      current_scene.stack.push();
     }else if(token[0].equals("pop")){
-    
-    
+      current_scene.stack.pop();
     }else if(token[0].equals("rotate")){
-    
-    
+      float degree = float(token[1]);
+      PVector axis = new PVector(float(token[2]), float(token[3]), float(token[4]));
+      current_scene.stack.rotate(degree, axis);
     }else if(token[0].equals("translate")){
-    
-    
+      current_scene.stack.translate(float(token[1]), float(token[2]), float(token[3]));
     }else if(token[0].equals("scale")){
-    
-    
+      current_scene.stack.scale(float(token[1]), float(token[2]), float(token[3]));
     }else if (token[0].equals("render")) {
       draw_scene(current_scene);   // this is where you should perform the scene rendering
       current_scene = null;
@@ -121,7 +129,7 @@ void draw_scene(Scene s) {
       // Have your routines (like ray/triangle intersection) 
       // print information when this flag is set.
       PVector eyePosition = new PVector(0,0,0);
-      color color_c = castRay(x, y, s, eyePosition);
+      color color_c = getColor(x, y, s, eyePosition);
       
       // set the pixel color
       color c = color_c;  // you should use the correct pixel color here
@@ -132,8 +140,20 @@ void draw_scene(Scene s) {
   debug_scene = s;
 }
 
-color castRay(int x, int y, Scene s, PVector origin){
-  // create and cast an eye ray in order to calculate the pixel color
+// cast a ray and return the first hit triangle in scene s
+Triangle castRay(Ray r, Scene s) {
+  for(int i = 0; i < s.triangles.size(); i++) {
+    
+  }
+  return null;
+}
+
+// return the color when shooting an eye ray from the origin
+color getColor(int x, int y, Scene s, PVector origin){
+  // create and cast an eye ray on pixel (x, y) in order to calculate the pixel color
+  if(debug_flag){
+    println("Start debugging " + s.name); 
+  }
   float k = tan(radians(s.fov*0.5));
   float x_p = (x - width/2) * 2 * k / width;
   float y_p = (height/2 - y) * 2 * k / height;
@@ -153,7 +173,9 @@ color castRay(int x, int y, Scene s, PVector origin){
     nearest_z = max(P.z, nearest_z);
     PVector L = s.light_position.copy().sub(P).normalize();
     PVector N = tri.N;
-    //float NDL = max(N.dot(L), 0);
+    if(debug_flag){
+      println("Triangle surface color: " + colorStr(tri.surface_color)); 
+    }
     int surface_red = tri.surface_color >> 16 & 0xFF;
     int surface_green = tri.surface_color >> 8 & 0xFF;
     int surface_blue = tri.surface_color & 0XFF;
@@ -186,10 +208,6 @@ PVector rayTriangleIntersection(Ray r, Triangle tri){
     return new PVector(0,0,0);
   PVector P = r.direction.copy().mult(t);
   if (P.dot(tri.N) > 0) tri.N.mult(-1);
-  //if(debug_flag){
-  //  println("Ray Plane intersect at : " + r.direction + "*" + t);
-  //  println("\tSurface Normal: " + tri.N);
-  //}
   if(insideTriangle(A, B, C, tri.N, P)){
     return P;
   }else {
@@ -214,12 +232,20 @@ boolean side(PVector O, PVector X, PVector N, PVector P){
   return N.dot(cross) > 0;
 }
 
+String colorStr(color c){
+  int r = (c >> 16) & 0xFF;
+  int g = (c >> 8) & 0xFF;
+  int b = c & 0xFF; 
+  return r + " " + g + " " + b;
+}
+
+
 // prints mouse location clicks, for help in debugging
 void mousePressed() {
   println ("\nYou pressed the mouse at " + mouseX + " " + mouseY);
   if(debug_scene != null){
     PVector eyePosition = new PVector(0,0,0);
-    castRay(mouseX, mouseY, debug_scene, eyePosition);
+    getColor(mouseX, mouseY, debug_scene, eyePosition);
   }
 }
 
