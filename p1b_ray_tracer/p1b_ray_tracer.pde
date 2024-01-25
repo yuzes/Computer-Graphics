@@ -192,7 +192,7 @@ color getColor(int x, int y, Scene s, PVector origin){
     float NDL = max(N.dot(L), 0);
     Ray shadowRay = new Ray(P, l.position.copy().sub(P), "SHADOW");
     if(debug_flag)
-      println("Shadow ray: " + shadowRay.toString() + " to Light " + l.position);
+      println("Shadow ray: " + shadowRay.toString() + " to Light " + l.position + " with color " + colorStr(l.light_color));
     RayTriangleIntersection shadowIntersection = castRay(shadowRay, s);
     if(shadowIntersection == null){
       c_r += surface_red * light_red * NDL / 255;
@@ -225,13 +225,15 @@ float rayTriangleIntersection(Ray r, Triangle tri){
   if(plane == 0)
     return 0.0;
   float t = -(a*r.origin.x + b*r.origin.y + c*r.origin.z + d) / plane;
-  if(t <= 0.000001)
+  if(t < 0.00001)
     return 0.0;
   PVector P = r.direction.copy().mult(t).add(r.origin);
-  if (P.dot(tri.N) > 0) tri.N.mult(-1);
+  if(P.z > -1) return 0.0;
+  if (P.dot(tri.N) > 0 && r.type == "EYE") tri.N.mult(-1);
   if(insideTriangle(A, B, C, tri.N, P)){
     if(debug_flag){
-      println("Hit point " + P + " inside triangle: " + colorStr(tri.surface_color) + " Triangle Normal: " + tri.N); 
+      println("Hit point " + P + " inside triangle: " + colorStr(tri.surface_color) + " Triangle Normal: " + tri.N);
+      println("O + t*d = " + r.origin + " + " + t + " * " + r.direction + " = " + r.origin.copy().add(r.direction.copy().mult(t)));
     }
     return t;
   }else {
