@@ -4,8 +4,6 @@ class Scene {
   
   int fov;
   String name;
-  PVector light_position;
-  color light_color;
   ArrayList<Triangle> triangles;
   color background_color;
   ArrayList<Light> lights;
@@ -41,6 +39,8 @@ class Triangle{
   Triangle(Triangle other){
     this.surface_color = other.surface_color;
     this.vertices = new ArrayList<PVector>();
+    if(other.N != null)
+      this.N = other.N.copy();
     for(int i = 0; i < other.vertices.size(); i++){
       this.vertices.add(other.vertices.get(i).copy()); 
     }
@@ -50,15 +50,17 @@ class Triangle{
 class Ray {
   PVector origin;      // 3D point
   PVector direction;   // Direction vector
+  String type;
   
   // Constructor
-  Ray(float x, float y, float z, float dx, float dy, float dz) {
-    origin = new PVector(x, y, z);
-    direction = new PVector(dx, dy, dz);
+  Ray(PVector origin, PVector direction, String type) {
+    this.origin = origin.copy();
+    this.direction = direction.copy();
+    this.type = type;
   }
   
   String toString(){
-    return "Origin: " + this.origin + " Direction: " + this.direction;
+    return this.type + " Origin: " + this.origin + " Direction: " + this.direction;
   }
   
   // Other methods and functionalities can be added as needed
@@ -69,7 +71,19 @@ class Light{
   color light_color;
   
   Light(PVector p, color c){
-    this.position = p;
+    this.position = p.copy();
     this.light_color = c;
   }
+}
+
+
+// An object that encapsulate information about a ray & triangle intersection, 
+class RayTriangleIntersection{
+  float t;
+  Triangle triangle;
+  RayTriangleIntersection(float t, Triangle tri){
+    this.t = t;
+    this.triangle = new Triangle(tri);
+  }
+  
 }

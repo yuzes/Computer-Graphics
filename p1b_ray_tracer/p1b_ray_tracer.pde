@@ -57,8 +57,10 @@ void interpreter(String file) {
       current_scene.background_color = color(r, g, b);
     }
     else if (token[0].equals("light")) {
-      current_scene.light_position = new PVector(float(token[1]),float(token[2]),float(token[3]));
-      current_scene.light_color = color(float(token[4]),float(token[5]),float(token[6]));
+      PVector position = new PVector(float(token[1]),float(token[2]),float(token[3]));
+      color light_color = color(float(token[4]),float(token[5]),float(token[6]));
+      Light current_light = new Light(position, light_color);
+      current_scene.lights.add(current_light);
     }
     else if (token[0].equals("surface")) {
       surface_color = color(float(token[1]), float(token[2]), float(token[3]));
@@ -83,7 +85,7 @@ void interpreter(String file) {
       PVector C = tri.vertices.get(2);
       PVector AB = B.copy().sub(A);
       PVector AC = C.copy().sub(A);
-      PVector N = AB.cross(AC).normalize(); // a, b, c
+      PVector N = AB.cross(AC).normalize();
       tri.N = N.copy();
       current_scene.addTriangle(tri);
       buffer = new Triangle();
@@ -130,10 +132,7 @@ void draw_scene(Scene s) {
       // print information when this flag is set.
       PVector eyePosition = new PVector(0,0,0);
       color color_c = getColor(x, y, s, eyePosition);
-      
-      // set the pixel color
-      color c = color_c;  // you should use the correct pixel color here
-      set (x, y, c);                   // make a tiny rectangle to fill the pixel
+      set (x, y, color_c);                   // make a tiny rectangle to fill the pixel
     }
   }
   debug_flag = true;
@@ -141,11 +140,22 @@ void draw_scene(Scene s) {
 }
 
 // cast a ray and return the first hit triangle in scene s
-Triangle castRay(Ray r, Scene s) {
+RayTriangleIntersection castRay(Ray r, Scene s) {
+  float min_t = Float.MAX_VALUE;
+  Triangle closest_triangle = null;
   for(int i = 0; i < s.triangles.size(); i++) {
-    
+    Triangle tri = s.triangles.get(i);
+    float t = rayTriangleIntersection(r, tri);
+    if(t <= 0 || t > min_t) {
+      continue;
+    }
+    if(t < min_t){
+      min_t = t;
+      closest_triangle = tri;
+    }
   }
-  return null;
+  if(closest_triangle == null) return null;
+  return new RayTriangleIntersection(min_t, closest_triangle);
 }
 
 // return the color when shooting an eye ray from the origin
@@ -158,38 +168,49 @@ color getColor(int x, int y, Scene s, PVector origin){
   float x_p = (x - width/2) * 2 * k / width;
   float y_p = (height/2 - y) * 2 * k / height;
   float z_p = -1;
-  Ray r = new Ray(origin.x, origin.y, origin.z, x_p, y_p, z_p);
-  color color_c = s.background_color;
-  float nearest_z = -Float.MAX_VALUE;
-  for(int i = 0; i < s.triangles.size(); i++) {
-    Triangle tri = s.triangles.get(i);
-    PVector P = rayTriangleIntersection(r, tri);
-    if(P.z > z_p) {
-      continue;
-    }
-    if(P.z < nearest_z){
-      break;
-    }
-    nearest_z = max(P.z, nearest_z);
-    PVector L = s.light_position.copy().sub(P).normalize();
-    PVector N = tri.N;
-    if(debug_flag){
-      println("Triangle surface color: " + colorStr(tri.surface_color)); 
-    }
-    int surface_red = tri.surface_color >> 16 & 0xFF;
-    int surface_green = tri.surface_color >> 8 & 0xFF;
-    int surface_blue = tri.surface_color & 0XFF;
-    int light_red = (s.light_color >> 16) & 0xFF;
-    int light_green = (s.light_color >> 8) & 0xFF;
-    int light_blue = (s.light_color) & 0xFF;
+  Ray r = new Ray(origin, new PVector(x_p, y_p, z_p), "EYE");
+  RayTriangleIntersection intersection = castRay(r, s);
+  if(intersection == null) return s.background_color;
+  color color_c = color(0,0,0);
+  Triangle closest_triangle = intersection.triangle;
+  float min_t = intersection.t;
+  color_c = closest_triangle.surface_color;
+  PVector P = r.direction.copy().mult(min_t).add(r.origin);
+  //PVector L = s.light_position.copy().sub(P).normalize();
+  PVector N = closest_triangle.N;
+  int surface_red = color_c >> 16 & 0xFF;
+  int surface_green = color_c >> 8 & 0xFF;
+  int surface_blue = color_c & 0XFF;
+  float c_r = 0;
+  float c_g = 0;
+  float c_b = 0;
+  for(Light l : s.lights){
+    PVector L = l.position.copy().sub(P).normalize();
+    int light_red = (l.light_color >> 16) & 0xFF;
+    int light_green = (l.light_color >> 8) & 0xFF;
+    int light_blue = (l.light_color) & 0xFF;
     float NDL = max(N.dot(L), 0);
-    color_c = color(surface_red * light_red * NDL / 255, surface_green * light_green * NDL / 255, surface_blue * light_blue * NDL / 255);
+    Ray shadowRay = new Ray(P, l.position.copy().sub(P), "SHADOW");
+    if(debug_flag)
+      println("Shadow ray: " + shadowRay.toString() + " to Light " + l.position);
+    RayTriangleIntersection shadowIntersection = castRay(shadowRay, s);
+    if(shadowIntersection == null){
+      c_r += surface_red * light_red * NDL / 255;
+      c_g += surface_green * light_green * NDL / 255;
+      c_b += surface_blue * light_blue * NDL / 255;
+    }else{
+      if(debug_flag){
+        println("\tShadowray & triangle intersect at: t = " + shadowIntersection.t + " on Triangle : " + colorStr(shadowIntersection.triangle.surface_color)); 
+      }
+      
+    }
   }
+  color_c = color(c_r, c_g, c_b);
   return color_c;
 }
 
 // calculate intersection between ray and triangle, return point at which ray and triangle intersect
-PVector rayTriangleIntersection(Ray r, Triangle tri){
+float rayTriangleIntersection(Ray r, Triangle tri){
   //calculate plane of triangle and get a, b, c and d
   PVector A = tri.vertices.get(0);
   PVector B = tri.vertices.get(1);
@@ -202,16 +223,19 @@ PVector rayTriangleIntersection(Ray r, Triangle tri){
   //calculate t and find intersection of ray and plane
   float plane = a * r.direction.x + b * r.direction.y + c * r.direction.z;
   if(plane == 0)
-    return new PVector(0,0,0);
+    return 0.0;
   float t = -(a*r.origin.x + b*r.origin.y + c*r.origin.z + d) / plane;
-  if(t < 0)
-    return new PVector(0,0,0);
-  PVector P = r.direction.copy().mult(t);
+  if(t <= 0.000001)
+    return 0.0;
+  PVector P = r.direction.copy().mult(t).add(r.origin);
   if (P.dot(tri.N) > 0) tri.N.mult(-1);
   if(insideTriangle(A, B, C, tri.N, P)){
-    return P;
+    if(debug_flag){
+      println("Hit point " + P + " inside triangle: " + colorStr(tri.surface_color) + " Triangle Normal: " + tri.N); 
+    }
+    return t;
   }else {
-    return new PVector(0,0,0);
+    return 0.0;
   }
 }
 
