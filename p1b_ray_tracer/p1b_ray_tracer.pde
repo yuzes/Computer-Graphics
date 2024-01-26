@@ -194,7 +194,7 @@ color getColor(int x, int y, Scene s, PVector origin){
     if(debug_flag)
       println("Shadow ray: " + shadowRay.toString() + " to Light " + l.position + " with color " + colorStr(l.light_color));
     RayTriangleIntersection shadowIntersection = castRay(shadowRay, s);
-    if(shadowIntersection == null){
+    if(shadowIntersection == null || shadowIntersection.t >= 1){
       c_r += surface_red * light_red * NDL / 255;
       c_g += surface_green * light_green * NDL / 255;
       c_b += surface_blue * light_blue * NDL / 255;
@@ -228,7 +228,7 @@ float rayTriangleIntersection(Ray r, Triangle tri){
   if(t < 0.00001)
     return 0.0;
   PVector P = r.direction.copy().mult(t).add(r.origin);
-  if(P.z > -1) return 0.0;
+  //if(P.z > -1) return 0.0;
   if (P.dot(tri.N) > 0 && r.type == "EYE") tri.N.mult(-1);
   if(insideTriangle(A, B, C, tri.N, P)){
     if(debug_flag){
