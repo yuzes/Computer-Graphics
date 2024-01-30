@@ -228,7 +228,6 @@ float rayTriangleIntersection(Ray r, Triangle tri){
   if(t < 0.00001)
     return 0.0;
   PVector P = r.direction.copy().mult(t).add(r.origin);
-  //if(P.z > -1) return 0.0;
   if (P.dot(tri.N) > 0 && r.type == "EYE") tri.N.mult(-1);
   if(insideTriangle(A, B, C, tri.N, P)){
     if(debug_flag){
