@@ -3,6 +3,7 @@
 // The most important part of the code is the interpreter, which will help
 // you parse the scene description (.cli) files.
 
+//comment
 boolean debug_flag = false;
 
 Scene debug_scene = null;
