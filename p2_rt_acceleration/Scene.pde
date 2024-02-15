@@ -8,11 +8,17 @@ class Scene {
   color background_color;
   ArrayList<Light> lights;
   MatrixStack stack;
+  ArrayList<Object> objects;
   
   Scene() {
     this.triangles = new ArrayList<Triangle>();
     this.stack = new MatrixStack();
     this.lights = new ArrayList<Light>();
+    this.objects = new ArrayList<Object>();
+  }
+  
+  void addObject(Object o){
+    this.objects.add(o);
   }
   
   void addTriangle(Triangle t){

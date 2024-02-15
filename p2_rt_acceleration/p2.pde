@@ -19,12 +19,12 @@ void setup() {
 void keyPressed() {
   reset_scene();
   switch(key) {
-    case '1': interpreter("s1.cli"); break;
-    case '2': interpreter("s2.cli"); break;
-    case '3': interpreter("s3.cli"); break;
-    case '4': interpreter("s4.cli"); break;
-    case '5': interpreter("s5.cli"); break;
-    case '6': interpreter("s6.cli"); break;
+    case '1': interpreter("s01.cli"); break;
+    case '2': interpreter("s02.cli"); break;
+    case '3': interpreter("s03.cli"); break;
+    case '4': interpreter("s04.cli"); break;
+    case '5': interpreter("s05.cli"); break;
+    case '6': interpreter("s06.cli"); break;
   }
 }
 
@@ -107,6 +107,19 @@ void interpreter(String file) {
     }else if (token[0].equals("render")) {
       draw_scene(current_scene);   // this is where you should perform the scene rendering
       current_scene = null;
+    }
+    //
+    // new material for p2
+    
+    
+    else if(token[0].equals("box")){
+      PVector min = new PVector(float(token[1]),float(token[2]),float(token[3]));
+      PVector max = new PVector(float(token[4]),float(token[5]),float(token[6]));
+      AABB bbox = new AABB(min, max);
+      current_scene.addObject(bbox);
+    }
+    else if(token[0].equals("named_object")){
+      
     }
     else if (token[0].equals("#")) {
       // comment (ignore)
