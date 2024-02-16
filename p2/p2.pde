@@ -89,6 +89,7 @@ void interpreter(String file) {
       PVector N = AB.cross(AC).normalize();
       tri.N = N.copy();
       current_scene.addTriangle(tri);
+      current_scene.addObject(tri);
       buffer = new Triangle();
     }else if(token[0].equals("read")){
       interpreter(token[1]);
@@ -115,7 +116,15 @@ void interpreter(String file) {
     else if(token[0].equals("box")){
       PVector min = new PVector(float(token[1]),float(token[2]),float(token[3]));
       PVector max = new PVector(float(token[4]),float(token[5]),float(token[6]));
-      AABB bbox = new AABB(min, max);
+      AABB bbox = new AABB(min, max, surface_color);
+      Matrix C = current_scene.stack.peek();
+      PMatrix3D matrix3D = new PMatrix3D();
+      for(int k = 0; k < 4; i++) {
+        for(int j = 0; j < 4; j++) {
+            matrix3D.set(k, j, C.matrix[i][j]);
+        }
+      }
+      bbox.invTransformation = C;
       current_scene.addObject(bbox);
     }
     else if(token[0].equals("named_object")){
@@ -154,22 +163,24 @@ void draw_scene(Scene s) {
 }
 
 // cast a ray and return the first hit triangle in scene s
-RayTriangleIntersection castRay(Ray r, Scene s) {
+IntersectionResult castRay(Ray r, Scene s) {
   float min_t = Float.MAX_VALUE;
-  Triangle closest_triangle = null;
-  for(int i = 0; i < s.triangles.size(); i++) {
-    Triangle tri = s.triangles.get(i);
-    float t = rayTriangleIntersection(r, tri);
+  IntersectionResult final_ir = null;
+  for(int i = 0; i < s.objects.size(); i++) {
+    Object obj = s.objects.get(i);
+    IntersectionResult ir = obj.intersectRay(r);
+    if(ir == null) continue;
+    float t = ir.t;
     if(t <= 0 || t > min_t) {
       continue;
     }
     if(t < min_t){
       min_t = t;
-      closest_triangle = tri;
+      final_ir = ir;
     }
   }
-  if(closest_triangle == null) return null;
-  return new RayTriangleIntersection(min_t, closest_triangle);
+  if(final_ir == null) return null;
+  return new IntersectionResult(min_t, final_ir.c, final_ir.N);
 }
 
 // return the color when shooting an eye ray from the origin
@@ -183,15 +194,14 @@ color getColor(int x, int y, Scene s, PVector origin){
   float y_p = (height/2 - y) * 2 * k / height;
   float z_p = -1;
   Ray r = new Ray(origin, new PVector(x_p, y_p, z_p), "EYE");
-  RayTriangleIntersection intersection = castRay(r, s);
+  IntersectionResult intersection = castRay(r, s);
+  
   if(intersection == null) return s.background_color;
   color color_c = color(0,0,0);
-  Triangle closest_triangle = intersection.triangle;
+  PVector N = intersection.N;
   float min_t = intersection.t;
-  color_c = closest_triangle.surface_color;
+  color_c = intersection.c;
   PVector P = r.direction.copy().mult(min_t).add(r.origin);
-  //PVector L = s.light_position.copy().sub(P).normalize();
-  PVector N = closest_triangle.N;
   int surface_red = color_c >> 16 & 0xFF;
   int surface_green = color_c >> 8 & 0xFF;
   int surface_blue = color_c & 0XFF;
@@ -207,69 +217,20 @@ color getColor(int x, int y, Scene s, PVector origin){
     Ray shadowRay = new Ray(P, l.position.copy().sub(P), "SHADOW");
     if(debug_flag)
       println("Shadow ray: " + shadowRay.toString() + " to Light " + l.position + " with color " + colorStr(l.light_color));
-    RayTriangleIntersection shadowIntersection = castRay(shadowRay, s);
+    IntersectionResult shadowIntersection = castRay(shadowRay, s);
     if(shadowIntersection == null){
       c_r += surface_red * light_red * NDL / 255;
       c_g += surface_green * light_green * NDL / 255;
       c_b += surface_blue * light_blue * NDL / 255;
     }else{
       if(debug_flag){
-        println("\tShadowray & triangle intersect at: t = " + shadowIntersection.t + " on Triangle : " + colorStr(shadowIntersection.triangle.surface_color)); 
+        println("\tShadowray & triangle intersect at: t = " + shadowIntersection.t + " on Triangle : " + colorStr(shadowIntersection.c)); 
       }
       
     }
   }
   color_c = color(c_r, c_g, c_b);
   return color_c;
-}
-
-// calculate intersection between ray and triangle, return point at which ray and triangle intersect
-float rayTriangleIntersection(Ray r, Triangle tri){
-  //calculate plane of triangle and get a, b, c and d
-  PVector A = tri.vertices.get(0);
-  PVector B = tri.vertices.get(1);
-  PVector C = tri.vertices.get(2);
-  PVector N = tri.N; // a, b, c
-  float a = N.x;
-  float b = N.y;
-  float c = N.z;
-  float d = -(a * A.x + b * A.y + c * A.z);
-  //calculate t and find intersection of ray and plane
-  float plane = a * r.direction.x + b * r.direction.y + c * r.direction.z;
-  if(plane == 0)
-    return 0.0;
-  float t = -(a*r.origin.x + b*r.origin.y + c*r.origin.z + d) / plane;
-  if(t < 0.00001)
-    return 0.0;
-  PVector P = r.direction.copy().mult(t).add(r.origin);
-  if(P.z > -1) return 0.0;
-  if (P.dot(tri.N) > 0 && r.type == "EYE") tri.N.mult(-1);
-  if(insideTriangle(A, B, C, tri.N, P)){
-    if(debug_flag){
-      println("Hit point " + P + " inside triangle: " + colorStr(tri.surface_color) + " Triangle Normal: " + tri.N);
-      println("O + t*d = " + r.origin + " + " + t + " * " + r.direction + " = " + r.origin.copy().add(r.direction.copy().mult(t)));
-    }
-    return t;
-  }else {
-    return 0.0;
-  }
-}
-
-// return true if P is inside triangle ABC
-boolean insideTriangle(PVector A, PVector B, PVector C, PVector N, PVector P){
-  boolean side1 = side(A, B, N, P);
-  boolean side2 = side(B, C, N, P);
-  boolean side3 = side(C, A, N, P);
-  return side1 == side2 && side2 == side3;
-}
-
-
-// return whether OX cross OP has the same side as ON
-boolean side(PVector O, PVector X, PVector N, PVector P){
-  PVector OX = X.copy().sub(O);
-  PVector OP = P.copy().sub(O);
-  PVector cross = OX.cross(OP);
-  return N.dot(cross) > 0;
 }
 
 String colorStr(color c){

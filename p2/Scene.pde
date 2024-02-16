@@ -26,32 +26,6 @@ class Scene {
   }
 }
 
-class Triangle{
-  ArrayList<PVector> vertices;
-  color surface_color;
-  PVector N; // surface normal
-  
-  Triangle(PVector v1, PVector v2, PVector v3) {
-     this.vertices = new ArrayList<PVector> ();
-     this.vertices.add(v1);
-     this.vertices.add(v2);
-     this.vertices.add(v3);
-  }
-  
-  Triangle() {
-    this.vertices = new ArrayList<PVector> ();
-  }
-  
-  Triangle(Triangle other){
-    this.surface_color = other.surface_color;
-    this.vertices = new ArrayList<PVector>();
-    if(other.N != null)
-      this.N = other.N.copy();
-    for(int i = 0; i < other.vertices.size(); i++){
-      this.vertices.add(other.vertices.get(i).copy()); 
-    }
-  }
-}
 
 class Ray {
   PVector origin;      // 3D point
@@ -92,4 +66,21 @@ class RayTriangleIntersection{
     this.triangle = new Triangle(tri);
   }
   
+}
+
+
+// Information about intersection of a ray with an object
+// t: distance from origin, along the direction of ray
+// c: color of hit point
+// N: surface normal of hit point
+class IntersectionResult{
+  float t;
+  color c;
+  PVector N;
+  
+  IntersectionResult(float t, color c, PVector N){
+    this.t = t;
+    this.c = c;
+    this.N = N;
+  }
 }
