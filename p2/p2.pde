@@ -25,6 +25,10 @@ void keyPressed() {
     case '4': interpreter("s04.cli"); break;
     case '5': interpreter("s05.cli"); break;
     case '6': interpreter("s06.cli"); break;
+    case '7': interpreter("s2.cli"); break;
+    case '8': interpreter("s3.cli"); break;
+    case '9': interpreter("s4.cli"); break;
+    case '0': interpreter("s5.cli"); break;
   }
 }
 
@@ -114,21 +118,28 @@ void interpreter(String file) {
     
     
     else if(token[0].equals("box")){
+      Matrix C = current_scene.stack.peek();
       PVector min = new PVector(float(token[1]),float(token[2]),float(token[3]));
       PVector max = new PVector(float(token[4]),float(token[5]),float(token[6]));
-      AABB bbox = new AABB(min, max, surface_color);
-      Matrix C = current_scene.stack.peek();
-      PMatrix3D matrix3D = new PMatrix3D();
-      for(int k = 0; k < 4; i++) {
-        for(int j = 0; j < 4; j++) {
-            matrix3D.set(k, j, C.matrix[i][j]);
-        }
-      }
-      bbox.invTransformation = C;
+      PVector min_transform = C.apply(min, false);
+      PVector max_transform = C.apply(max, false);
+      AABB bbox = new AABB(min_transform, max_transform, surface_color);
+      //Matrix inv = C.invert();
+      //bbox.invTransformation = inv;
       current_scene.addObject(bbox);
     }
     else if(token[0].equals("named_object")){
-      
+      println("named_object " + token[1]);
+      Object obj = current_scene.removeTail();
+      current_scene.putInstance(token[1], obj);
+    }
+    else if(token[0].equals("instance")){
+      Object obj = current_scene.getInstance(token[1]);
+      Matrix C = current_scene.stack.peek();
+      println("Current transformation: \n" + C.toString());
+      Matrix inv = C.invert();
+      Instance objInstance = new Instance(obj, inv);
+      current_scene.addObject(objInstance);
     }
     else if (token[0].equals("#")) {
       // comment (ignore)
@@ -215,16 +226,16 @@ color getColor(int x, int y, Scene s, PVector origin){
     int light_blue = (l.light_color) & 0xFF;
     float NDL = max(N.dot(L), 0);
     Ray shadowRay = new Ray(P, l.position.copy().sub(P), "SHADOW");
-    if(debug_flag)
-      println("Shadow ray: " + shadowRay.toString() + " to Light " + l.position + " with color " + colorStr(l.light_color));
+    //if(debug_flag)
+    //  println("Shadow ray: " + shadowRay.toString() + " to Light " + l.position + " with color " + colorStr(l.light_color));
     IntersectionResult shadowIntersection = castRay(shadowRay, s);
-    if(shadowIntersection == null){
+    if(shadowIntersection == null || shadowIntersection.t < 0.00001){
       c_r += surface_red * light_red * NDL / 255;
       c_g += surface_green * light_green * NDL / 255;
       c_b += surface_blue * light_blue * NDL / 255;
     }else{
       if(debug_flag){
-        println("\tShadowray & triangle intersect at: t = " + shadowIntersection.t + " on Triangle : " + colorStr(shadowIntersection.c)); 
+        println("\tShadowray & triangle intersect at: t = " + shadowIntersection.t + " on Color : " + colorStr(shadowIntersection.c) + "Surface normal: " + shadowIntersection.N); 
       }
       
     }

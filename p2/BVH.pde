@@ -1,3 +1,3 @@
-class BVH{
+class BVH extends Object{
   
 }

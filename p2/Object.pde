@@ -9,10 +9,10 @@ interface Transformable {
 }
 
 class Object implements Renderable{
-    Matrix invTransformation;
+    //Matrix invTransformation;
     
     Object() {
-        this.invTransformation = new Matrix(4, 4);
+        //this.invTransformation = new Matrix(4, 4);
     }
     
     IntersectionResult intersectRay(Ray r){
@@ -20,37 +20,22 @@ class Object implements Renderable{
     }
 }
 
-
-class NamedObject{
-  String name;
-  ArrayList<Triangle> triangles;
+class Instance extends Object{
+  Object obj;
+  Matrix inverseTransformation;
   
-  NamedObject(String name){
-    this.name = name;
-    this.triangles = new ArrayList<Triangle>();
+  Instance(Object obj) {
+    this(obj, new Matrix(4,4));
   }
-}
-
-class NamedObjectInstance extends Object {
-  NamedObject mesh;
-  Matrix transformation;
   
+  Instance(Object obj, Matrix inv){
+    this.obj = obj;
+    this.inverseTransformation = inv;
+  }
   
   @Override
   IntersectionResult intersectRay(Ray r){
-    float min_t = Float.MAX_VALUE;
-    Triangle closest_triangle = null;
-    for(Triangle tri : this.mesh.triangles) {
-      float t = tri.rayTriangleIntersection(r);
-      if(t <= 0 || t > min_t) {
-        continue;
-      }
-      if(t < min_t){
-        min_t = t;
-        closest_triangle = tri;
-      }
-    }
-    if(closest_triangle == null) return null;
-    return new IntersectionResult(min_t, closest_triangle.surface_color, closest_triangle.N);
+    Ray r_trans = r.transform(this.inverseTransformation);
+    return this.obj.intersectRay(r_trans);
   }
 }

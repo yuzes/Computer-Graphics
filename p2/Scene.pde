@@ -9,42 +9,37 @@ class Scene {
   ArrayList<Light> lights;
   MatrixStack stack;
   ArrayList<Object> objects;
+  HashMap<String, Object> instances;
   
   Scene() {
     this.triangles = new ArrayList<Triangle>();
     this.stack = new MatrixStack();
     this.lights = new ArrayList<Light>();
     this.objects = new ArrayList<Object>();
+    this.instances = new HashMap<>();
   }
   
   void addObject(Object o){
     this.objects.add(o);
   }
   
+  Object removeTail(){
+    return this.objects.remove(this.objects.size() - 1); 
+  }
+  
   void addTriangle(Triangle t){
     this.triangles.add(t);
   }
-}
-
-
-class Ray {
-  PVector origin;      // 3D point
-  PVector direction;   // Direction vector
-  String type;
   
-  // Constructor
-  Ray(PVector origin, PVector direction, String type) {
-    this.origin = origin.copy();
-    this.direction = direction.copy();
-    this.type = type;
+  void putInstance(String name, Object obj){
+    this.instances.put(name, obj); 
   }
   
-  String toString(){
-    return this.type + " Origin: " + this.origin + " Direction: " + this.direction;
+  Object getInstance(String name){
+    return this.instances.get(name); 
   }
-  
-  // Other methods and functionalities can be added as needed
 }
+
 
 class Light{
   PVector position;

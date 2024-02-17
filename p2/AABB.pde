@@ -1,3 +1,5 @@
+float EPS = 0.0001f;
+
 class AABB extends Object{
   PVector min;
   PVector max;
@@ -11,6 +13,11 @@ class AABB extends Object{
   
   @Override
   IntersectionResult intersectRay(Ray r){
+    //r = r.transform(this.invTransformation);
+    //if(debug_flag){
+    //  println("Applyed By ray: \n" + this.invTransformation.toString());
+    //  println("Ray : " + r.toString());
+    //}
     float txmin, txmax, tymin, tymax, tzmin, tzmax;
     float invDx = 1.0 / r.direction.x;
     float invDy = 1.0 / r.direction.y;
@@ -37,23 +44,23 @@ class AABB extends Object{
     
     txmin = max(txmin, tzmin);
     txmax = min(txmax, tzmax);
-
-    if (txmin < 0 && txmax < 0) return null; // ray behind object
+    //if (txmin < 0 && txmax < 0) return null; // ray behind object
 
 
 
     float t = txmin >= 0 ? txmin : txmax;
+    if(t < 0) return null;
     PVector N = new PVector(0,0,0);
     PVector intersect = r.origin.copy().add(r.direction.copy().mult(t));
-    if(intersect.z == max.z){
+    if(Math.abs(intersect.z - max.z) < EPS){
       N.z = 1; 
-    }else if(intersect.y == min.y){
-      N.y = -1; 
-    }else if(intersect.y == max.y){
+    }else if(Math.abs(intersect.y - max.y) < EPS){
       N.y = 1; 
-    }else if(intersect.x == min.x){
+    }else if(Math.abs(intersect.y - min.y) < EPS){
+      N.y = -1; 
+    }else if(Math.abs(intersect.x - min.x) < EPS){
       N.x = -1; 
-    }else if(intersect.x == max.x){
+    }else if(Math.abs(intersect.x - max.x) < EPS){
       N.x = 1;
     }
     return new IntersectionResult(t, this.surface_color, N);  

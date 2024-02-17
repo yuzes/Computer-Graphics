@@ -88,6 +88,42 @@ class Matrix{
     }
   }
   
+  // Create a matrix based on give 1d array
+  Matrix(float[] m){
+    if(m.length != 16) {
+      throw new IllegalArgumentException("Float array length must be exactly 16");
+    }
+    this.matrix = new float[4][4];
+    int index = 0;
+    for(int i = 0; i < 4; i++){
+      for(int j = 0; j < 4; j++){
+        this.matrix[i][j] = m[index++];
+      }
+    }
+  }
+  
+  Matrix invert(){
+    if(this.matrix.length != 4 || this.matrix[0].length != 4) {
+      throw new IllegalArgumentException("matrix should be 4x4");
+    }
+    PMatrix3D matrix3D = new PMatrix3D();
+    float[] matrixArray = this.toArray();
+    matrix3D.set(matrixArray);
+    matrix3D.invert();
+    return new Matrix(matrix3D.get(null));
+  }
+  
+  float[] toArray() {
+    float[] out = new float[this.matrix.length * this.matrix[0].length];
+    int index = 0;
+    for(int i = 0; i < this.matrix.length; i++){
+      for(int j = 0; j < this.matrix[0].length; j++){
+        out[index++] = this.matrix[i][j]; 
+      }
+    }
+    return out;
+  }
+  
   //Create a matrix based on given 2d array
   Matrix(float[][] m){
     this.matrix = new float[m.length][m[0].length];
@@ -104,6 +140,14 @@ class Matrix{
       System.err.println("index out of bound (" + r + "," + c + ")"); 
     }
     return this.matrix[r][c];
+  }
+  
+  // apply this transformation matrix to v
+  PVector apply(PVector v, boolean isDirection){
+    float w = isDirection ? 0 : 1;
+    Matrix v_matrix = new Matrix(new float[][] {{v.x},{v.y},{v.z},{w}});
+    Matrix result = this.mult(v_matrix);
+    return new PVector(result.get(0,0), result.get(1,0), result.get(2,0));
   }
   
   Matrix mult(Matrix other){
@@ -125,5 +169,22 @@ class Matrix{
       }
     }
     return new Matrix(result);
+  }
+  
+  String toString(){
+    StringBuilder builder = new StringBuilder();
+      for (int i = 0; i < matrix.length; i++) {
+          for (int j = 0; j < matrix[i].length; j++) {
+              builder.append(String.format("%.4f", matrix[i][j]));
+              if (j < matrix[i].length - 1) {
+                  builder.append(", ");
+              }
+          }
+          if (i < matrix.length - 1) {
+              builder.append("\n");
+          }
+      }
+      builder.append("\n");
+      return builder.toString();
   }
 }
