@@ -9,15 +9,16 @@ class AABB extends Object{
     this.min= min;
     this.max = max;
     this.surface_color = surface_color;
+    this.center = min.copy().add(max).mult(0.5);
+  }
+  
+  @Override
+  AABB getBbox(){
+    return this; 
   }
   
   @Override
   IntersectionResult intersectRay(Ray r){
-    //r = r.transform(this.invTransformation);
-    //if(debug_flag){
-    //  println("Applyed By ray: \n" + this.invTransformation.toString());
-    //  println("Ray : " + r.toString());
-    //}
     float txmin, txmax, tymin, tymax, tzmin, tzmax;
     float invDx = 1.0 / r.direction.x;
     float invDy = 1.0 / r.direction.y;
@@ -63,6 +64,10 @@ class AABB extends Object{
     }else if(Math.abs(intersect.x - max.x) < EPS){
       N.x = 1;
     }
-    return new IntersectionResult(t, this.surface_color, N);  
+    //if(debug_flag){
+    //  println(r.type + " Intersection result: t = " + t + " color = " + colorStr(this.surface_color) + " N = " + N);
+    //  println("Min = " + min + " Max = " + max + " Intersection = " + intersect);
+    //}
+    return new IntersectionResult(t, this.surface_color, N, r.direction.copy().mult(t).add(r.origin));  
   }
 }

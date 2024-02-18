@@ -72,10 +72,12 @@ class IntersectionResult{
   float t;
   color c;
   PVector N;
+  PVector hitpoint;
   
-  IntersectionResult(float t, color c, PVector N){
+  IntersectionResult(float t, color c, PVector N, PVector p){
     this.t = t;
     this.c = c;
     this.N = N;
+    this.hitpoint = p;
   }
 }

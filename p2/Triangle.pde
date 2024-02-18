@@ -8,6 +8,8 @@ class Triangle extends Object{
      this.vertices.add(v1);
      this.vertices.add(v2);
      this.vertices.add(v3);
+     this.center = v1.copy().add(v2).add(v3).mult(0.33333f);
+     
   }
   
   Triangle() {
@@ -19,16 +21,32 @@ class Triangle extends Object{
     this.vertices = new ArrayList<PVector>();
     if(other.N != null)
       this.N = other.N.copy();
+    PVector bboxMin = new PVector(Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE);
+    PVector bboxMax = bboxMin.copy().mult(-1);
     for(int i = 0; i < other.vertices.size(); i++){
-      this.vertices.add(other.vertices.get(i).copy()); 
+      PVector v = other.vertices.get(i).copy();
+      this.vertices.add(v);
+      bboxMin.x = min(bboxMin.x, v.x);
+      bboxMin.y = min(bboxMin.y, v.y);
+      bboxMin.z = min(bboxMin.z, v.z);
+      
+      bboxMax.x = max(bboxMax.x, v.x);
+      bboxMax.y = max(bboxMax.y, v.y);
+      bboxMax.z = max(bboxMax.z, v.z);
     }
+    this.bbox = new AABB(bboxMin, bboxMax, color(1,1,1));
+    PVector v1 = this.vertices.get(0);
+    PVector v2 = this.vertices.get(1);
+    PVector v3 = this.vertices.get(2);
+    this.center = v1.copy().add(v2).add(v3).mult(0.33333f);
   }
+  
   
   @Override
   IntersectionResult intersectRay(Ray r){
     float t = this.rayTriangleIntersection(r);
     if(t == 0) return null;
-    return new IntersectionResult(t, this.surface_color, this.N);
+    return new IntersectionResult(t, this.surface_color, this.N, r.direction.copy().mult(t).add(r.origin));
   }
   
   float rayTriangleIntersection(Ray r){
@@ -46,10 +64,12 @@ class Triangle extends Object{
     if(plane == 0)
       return 0.0;
     float t = -(a*r.origin.x + b*r.origin.y + c*r.origin.z + d) / plane;
+    //if(debug_flag) 
+    //  println(t);
     if(t < 0.00001)
       return 0.0;
     PVector P = r.direction.copy().mult(t).add(r.origin);
-    if(P.z > -1) return 0.0;
+    //if(P.z > -1) return 0.0;
     if (P.dot(this.N) > 0 && r.type == "EYE") this.N.mult(-1);
     if(insideTriangle(A, B, C, this.N, P)){
       if(debug_flag){
@@ -60,6 +80,12 @@ class Triangle extends Object{
     }else {
       return 0.0;
     }
+  }
+  
+  // return true if point is behind view plane
+  // view plane is always perp to r's direction
+  boolean behindViewPlane(PVector point, Ray r){
+    return true;
   }
   
   // return true if P is inside triangle ABC

@@ -9,6 +9,8 @@ boolean debug_flag = false;
 Scene debug_scene = null;
 Scene current_scene = null;
 color surface_color = color(0,0,0);
+int timer;  // global variable
+ArrayList<Object> accelerationList;
 
 void setup() {
   size (300, 300);  
@@ -25,8 +27,8 @@ void keyPressed() {
     case '4': interpreter("s04.cli"); break;
     case '5': interpreter("s05.cli"); break;
     case '6': interpreter("s06.cli"); break;
-    case '7': interpreter("s2.cli"); break;
-    case '8': interpreter("s3.cli"); break;
+    case '7': interpreter("s07.cli"); break;
+    case '8': interpreter("s08.cli"); break;
     case '9': interpreter("s4.cli"); break;
     case '0': interpreter("s5.cli"); break;
   }
@@ -81,7 +83,8 @@ void interpreter(String file) {
                              {1.0f}});
       Matrix C = current_scene.stack.peek();
       Matrix transform_point = C.mult(point);
-      buffer.vertices.add(new PVector(transform_point.get(0,0), transform_point.get(1,0), transform_point.get(2,0)));
+      PVector vertex = new PVector(transform_point.get(0,0), transform_point.get(1,0), transform_point.get(2,0));
+      buffer.vertices.add(vertex);
     }
     else if (token[0].equals("end")) {
       Triangle tri = new Triangle(buffer);
@@ -92,8 +95,11 @@ void interpreter(String file) {
       PVector AC = C.copy().sub(A);
       PVector N = AB.cross(AC).normalize();
       tri.N = N.copy();
-      current_scene.addTriangle(tri);
-      current_scene.addObject(tri);
+      if(accelerationList != null){
+        accelerationList.add(tri);
+      }else{
+        current_scene.addObject(tri); 
+      }
       buffer = new Triangle();
     }else if(token[0].equals("read")){
       interpreter(token[1]);
@@ -110,8 +116,13 @@ void interpreter(String file) {
     }else if(token[0].equals("scale")){
       current_scene.stack.scale(float(token[1]), float(token[2]), float(token[3]));
     }else if (token[0].equals("render")) {
+      timer = millis();
       draw_scene(current_scene);   // this is where you should perform the scene rendering
       current_scene = null;
+      int new_timer = millis();
+      int diff = new_timer - timer;
+      float seconds = diff / 1000.0;
+      println ("timer = " + seconds);
     }
     //
     // new material for p2
@@ -124,8 +135,6 @@ void interpreter(String file) {
       PVector min_transform = C.apply(min, false);
       PVector max_transform = C.apply(max, false);
       AABB bbox = new AABB(min_transform, max_transform, surface_color);
-      //Matrix inv = C.invert();
-      //bbox.invTransformation = inv;
       current_scene.addObject(bbox);
     }
     else if(token[0].equals("named_object")){
@@ -136,10 +145,18 @@ void interpreter(String file) {
     else if(token[0].equals("instance")){
       Object obj = current_scene.getInstance(token[1]);
       Matrix C = current_scene.stack.peek();
-      println("Current transformation: \n" + C.toString());
       Matrix inv = C.invert();
-      Instance objInstance = new Instance(obj, inv);
+      Instance objInstance = new Instance(obj, C, inv, surface_color);
       current_scene.addObject(objInstance);
+    }
+    else if(token[0].equals("begin_accel")){
+      accelerationList = new ArrayList<Object>();
+    }
+    else if(token[0].equals("end_accel")){
+      println("Acceleration list has " + accelerationList.size() + " objects");
+      BVH bvh = new BVH(accelerationList);
+      current_scene.addObject(bvh);
+      accelerationList = null;
     }
     else if (token[0].equals("#")) {
       // comment (ignore)
@@ -174,11 +191,11 @@ void draw_scene(Scene s) {
 }
 
 // cast a ray and return the first hit triangle in scene s
-IntersectionResult castRay(Ray r, Scene s) {
+IntersectionResult castRay(Ray r, ArrayList<Object> objects, int start, int end) {
   float min_t = Float.MAX_VALUE;
   IntersectionResult final_ir = null;
-  for(int i = 0; i < s.objects.size(); i++) {
-    Object obj = s.objects.get(i);
+  for(int i = start; i <= end; i++) {
+    Object obj = objects.get(i);
     IntersectionResult ir = obj.intersectRay(r);
     if(ir == null) continue;
     float t = ir.t;
@@ -191,7 +208,7 @@ IntersectionResult castRay(Ray r, Scene s) {
     }
   }
   if(final_ir == null) return null;
-  return new IntersectionResult(min_t, final_ir.c, final_ir.N);
+  return new IntersectionResult(min_t, final_ir.c, final_ir.N, final_ir.hitpoint);
 }
 
 // return the color when shooting an eye ray from the origin
@@ -205,14 +222,14 @@ color getColor(int x, int y, Scene s, PVector origin){
   float y_p = (height/2 - y) * 2 * k / height;
   float z_p = -1;
   Ray r = new Ray(origin, new PVector(x_p, y_p, z_p), "EYE");
-  IntersectionResult intersection = castRay(r, s);
+  IntersectionResult intersection = castRay(r, s.objects, 0, s.objects.size() - 1);
   
   if(intersection == null) return s.background_color;
   color color_c = color(0,0,0);
   PVector N = intersection.N;
-  float min_t = intersection.t;
+  //float min_t = intersection.t;
   color_c = intersection.c;
-  PVector P = r.direction.copy().mult(min_t).add(r.origin);
+  PVector P = intersection.hitpoint;
   int surface_red = color_c >> 16 & 0xFF;
   int surface_green = color_c >> 8 & 0xFF;
   int surface_blue = color_c & 0XFF;
@@ -220,6 +237,7 @@ color getColor(int x, int y, Scene s, PVector origin){
   float c_g = 0;
   float c_b = 0;
   for(Light l : s.lights){
+    //PVector light_position_transform = s.stack.peek().invert().apply(l.position, false);
     PVector L = l.position.copy().sub(P).normalize();
     int light_red = (l.light_color >> 16) & 0xFF;
     int light_green = (l.light_color >> 8) & 0xFF;
@@ -228,7 +246,7 @@ color getColor(int x, int y, Scene s, PVector origin){
     Ray shadowRay = new Ray(P, l.position.copy().sub(P), "SHADOW");
     //if(debug_flag)
     //  println("Shadow ray: " + shadowRay.toString() + " to Light " + l.position + " with color " + colorStr(l.light_color));
-    IntersectionResult shadowIntersection = castRay(shadowRay, s);
+    IntersectionResult shadowIntersection = castRay(shadowRay, s.objects, 0, s.objects.size() - 1);
     if(shadowIntersection == null || shadowIntersection.t < 0.00001){
       c_r += surface_red * light_red * NDL / 255;
       c_g += surface_green * light_green * NDL / 255;
