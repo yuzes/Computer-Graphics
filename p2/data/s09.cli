@@ -31,6 +31,10 @@ end
 
 surface  .8 .8 .8
 
+begin_accel
+read bun69k.cli
+end_accel
+named_object bunny
 
 # now instance the bunny
 
@@ -40,53 +44,41 @@ translate 0 0 -14
 
 push
 translate -6 0 0
-begin_accel
-read bun69k.cli
-end_accel
+instance bunny
 pop
 
 push
 translate -4 0 0
-begin_accel
-read bun69k.cli
-end_accel
+instance bunny
 pop
 
 push
 translate -2 0 0
-begin_accel
-read bun69k.cli
-end_accel
+instance bunny
 pop
 
 push
 translate 0 0 0
-begin_accel
-read bun69k.cli
-end_accel
+instance bunny
 pop
 
 push
 translate 2 0 0
-begin_accel
-read bun69k.cli
-end_accel
+instance bunny
 pop
 
 push
 translate 4 0 0
-begin_accel
-read bun69k.cli
-end_accel
+instance bunny
 pop
 
 push
 translate 6 0 0
-begin_accel
-read bun69k.cli
-end_accel
+instance bunny
 pop
 
 pop
 
 render
+
+

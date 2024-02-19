@@ -50,17 +50,19 @@ class Instance extends Object{
     Ray r_trans = r.transform(this.inverseTransformation);
     IntersectionResult ir = this.obj.intersectRay(r_trans);
     if(ir == null) return null;
-    ir.c = this.surface_color;
     PVector hit_rspace = r_trans.direction.copy().mult(ir.t).add(r_trans.origin);
     PVector hit_wspace = transformation.apply(hit_rspace, false);
+    if(hit_wspace.z > -1.0) return null;
+    PVector N_wspace = transformation.apply(ir.N.copy(), true);
     if(debug_flag){
       println("Hit point in vector space: " + hit_rspace);
-      println("Hit point in world space: " + hit_wspace); 
+      println("Hit point in world space: " + hit_wspace);
+      println("Surface Normal in vector space: " + ir.N);
+      println("Surface Normal in world space: " + N_wspace);
     }
-    if(hit_wspace.z > -1.0) return null;
-    PVector N_wspace = transformation.apply(ir.N, true);
     PVector d = r.direction;
     float t_wspace = (PVector.sub(hit_wspace, r.origin).dot(d)) / (d.dot(d));
-    return new IntersectionResult(t_wspace, ir.c, N_wspace.normalize(), hit_wspace);
+    if(N_wspace.z < 0) N_wspace.mult(-1);
+    return new IntersectionResult(t_wspace, this.surface_color, N_wspace.normalize(), hit_wspace);
   }
 }

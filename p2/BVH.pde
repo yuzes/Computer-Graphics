@@ -76,11 +76,11 @@ class BVHNode extends Object{
     IntersectionResult ir = node.bbox.intersectRay(r);
     if(ir == null) return null;
     if(node.left == null && node.right == null){
-      if(debug_flag){
-        println("[Depth" + node.depth + "] Debug intersectRayHelper");
-        println("\tbbox min: " + node.bbox.min + "bbox max: " + node.bbox.max);
-        println("\tNode contains object from " + node.start + " to " + node.end );
-      }
+      //if(debug_flag){
+      //  println("[Depth" + node.depth + "] Debug intersectRayHelper");
+      //  println("\tbbox min: " + node.bbox.min + "bbox max: " + node.bbox.max);
+      //  println("\tNode contains object from " + node.start + " to " + node.end );
+      //}
       IntersectionResult objIr = castRay(r, node.objects, node.start, node.end);
       return objIr;
     }

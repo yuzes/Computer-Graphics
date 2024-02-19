@@ -13,7 +13,7 @@ int timer;  // global variable
 ArrayList<Object> accelerationList;
 
 void setup() {
-  size (300, 300);  
+  size (600,600);  
   noStroke();
   background (0, 0, 0);
 }
@@ -34,7 +34,6 @@ void keyPressed() {
     case 'a': interpreter("s11.cli"); break;
     case 's': interpreter("s12.cli"); break;
     case 'd': interpreter("s13.cli"); break;
-    case 'q': interpreter("s5.cli"); break;
   }
 }
 
@@ -233,11 +232,9 @@ color getColor(int x, int y, Scene s, PVector origin){
   float z_p = -1;
   Ray r = new Ray(origin, new PVector(x_p, y_p, z_p), "EYE");
   IntersectionResult intersection = castRay(r, s.objects, 0, s.objects.size() - 1);
-  
   if(intersection == null) return s.background_color;
   color color_c = color(0,0,0);
   PVector N = intersection.N;
-  //float min_t = intersection.t;
   color_c = intersection.c;
   PVector P = intersection.hitpoint.copy();
   int surface_red = color_c >> 16 & 0xFF;
