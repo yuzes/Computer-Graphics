@@ -13,7 +13,7 @@ int timer;  // global variable
 ArrayList<Object> accelerationList;
 
 void setup() {
-  size (600,600);  
+  size (300,300);  
   noStroke();
   background (0, 0, 0);
 }
@@ -253,7 +253,7 @@ color getColor(int x, int y, Scene s, PVector origin){
     Ray shadowRay = new Ray(P, l.position.copy().sub(P), "SHADOW");
     IntersectionResult shadowIntersection = castRay(shadowRay, s.objects, 0, s.objects.size() - 1);
     //if(true){
-    if(shadowIntersection == null || shadowIntersection.t < 0.001){
+    if(shadowIntersection == null || shadowIntersection.t < 0.00001){
       c_r += surface_red * light_red * NDL / 255;
       c_g += surface_green * light_green * NDL / 255;
       c_b += surface_blue * light_blue * NDL / 255;
