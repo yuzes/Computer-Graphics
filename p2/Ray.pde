@@ -5,10 +5,10 @@ class Ray {
   
   // Constructor
   Ray(PVector origin, PVector direction, String type) {
+    //if(type == "EYE") direction.normalize();
     this.origin = origin.copy();
     this.direction = direction.copy();
     this.type = type;
-    if(type == "EYE") this.direction.normalize();
   }
   
   String toString(){
@@ -20,7 +20,6 @@ class Ray {
   Ray transform(Matrix m){
     PVector new_origin = m.apply(this.origin, false);
     PVector new_direction = m.apply(this.direction, true);
-    if(this.type == "EYE") new_direction.normalize();
-    return new Ray(new_origin, new_direction, this.type);
+    return new Ray(new_origin, new_direction.copy(), this.type);
   }
 }

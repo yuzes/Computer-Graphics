@@ -53,7 +53,9 @@ class AABB extends Object{
     if(t < 0) return null;
     PVector N = new PVector(0,0,0);
     PVector intersect = r.origin.copy().add(r.direction.copy().mult(t));
-    if(Math.abs(intersect.z - max.z) < EPS){
+    if(Math.abs(intersect.z - min.z) < EPS){
+      N.z = -1;
+    }else if(Math.abs(intersect.z - max.z) < EPS){
       N.z = 1; 
     }else if(Math.abs(intersect.y - max.y) < EPS){
       N.y = 1; 
@@ -65,6 +67,7 @@ class AABB extends Object{
       N.x = 1;
     }
     //if(debug_flag){
+    //  println("DEBUG AABB");
     //  println(r.type + " Intersection result: t = " + t + " color = " + colorStr(this.surface_color) + " N = " + N);
     //  println("Min = " + min + " Max = " + max + " Intersection = " + intersect);
     //}

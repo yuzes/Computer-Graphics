@@ -34,7 +34,7 @@ class Triangle extends Object{
       bboxMax.y = max(bboxMax.y, v.y);
       bboxMax.z = max(bboxMax.z, v.z);
     }
-    this.bbox = new AABB(bboxMin, bboxMax, color(1,1,1));
+    this.bbox = new AABB(bboxMin.copy(), bboxMax.copy(), color(1,random(0,1),1));
     PVector v1 = this.vertices.get(0);
     PVector v2 = this.vertices.get(1);
     PVector v3 = this.vertices.get(2);
@@ -44,9 +44,24 @@ class Triangle extends Object{
   
   @Override
   IntersectionResult intersectRay(Ray r){
+    //Ray r_trans = r.transform(this.inverseTransformation);
+    //float t = this.rayTriangleIntersection(r_trans);
+    //if(t == 0.0) return null;
+    //PVector hit_rspace = r_trans.direction.copy().mult(t).add(r_trans.origin);
+    //PVector hit_wspace = transformation.apply(hit_rspace, false);
+    //if(hit_wspace.z > -1.0) return null;
+    ////PVector N_wspace = transformation.apply(ir.N, true);
+    //PVector d = r.direction;
+    //float t_wspace = (PVector.sub(hit_wspace, r.origin).dot(d)) / (d.dot(d));
+    //return new IntersectionResult(t_wspace, this.surface_color, this.N, r.direction.copy().mult(t).add(r.origin));
     float t = this.rayTriangleIntersection(r);
-    if(t == 0) return null;
-    return new IntersectionResult(t, this.surface_color, this.N, r.direction.copy().mult(t).add(r.origin));
+    if(t == 0.0) return null;
+    PVector P = r.direction.copy().mult(t).add(r.origin);
+    //if(debug_flag)
+    //  println("\t\tIntersection point: " + P);
+    //if(P.z > -1) return null;
+    if (P.copy().dot(this.N) > 0 && r.type == "EYE") this.N.mult(-1);
+    return new IntersectionResult(t, this.surface_color, this.N.copy(), P.copy());
   }
   
   float rayTriangleIntersection(Ray r){
@@ -70,7 +85,6 @@ class Triangle extends Object{
       return 0.0;
     PVector P = r.direction.copy().mult(t).add(r.origin);
     //if(P.z > -1) return 0.0;
-    if (P.dot(this.N) > 0 && r.type == "EYE") this.N.mult(-1);
     if(insideTriangle(A, B, C, this.N, P)){
       if(debug_flag){
         println("Hit point " + P + " inside triangle: " + colorStr(this.surface_color) + " Triangle Normal: " + this.N);

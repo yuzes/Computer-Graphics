@@ -29,8 +29,12 @@ void keyPressed() {
     case '6': interpreter("s06.cli"); break;
     case '7': interpreter("s07.cli"); break;
     case '8': interpreter("s08.cli"); break;
-    case '9': interpreter("s4.cli"); break;
-    case '0': interpreter("s5.cli"); break;
+    case '9': interpreter("s09.cli"); break;
+    case '0': interpreter("s10.cli"); break;
+    case 'a': interpreter("s11.cli"); break;
+    case 's': interpreter("s12.cli"); break;
+    case 'd': interpreter("s13.cli"); break;
+    case 'q': interpreter("s5.cli"); break;
   }
 }
 
@@ -76,14 +80,16 @@ void interpreter(String file) {
       buffer.surface_color = surface_color;
     }
     else if (token[0].equals("vertex")) {
-      Matrix point = new Matrix(new float[][] {
+      Matrix point_m = new Matrix(new float[][] {
                              {float(token[1])},
                              {float(token[2])},
                              {float(token[3])},
                              {1.0f}});
+      PVector point = new PVector(float(token[1]), float(token[2]),float(token[3]));
       Matrix C = current_scene.stack.peek();
-      Matrix transform_point = C.mult(point);
+      Matrix transform_point = C.mult(point_m);
       PVector vertex = new PVector(transform_point.get(0,0), transform_point.get(1,0), transform_point.get(2,0));
+      //PVector vertex = point.copy();
       buffer.vertices.add(vertex);
     }
     else if (token[0].equals("end")) {
@@ -95,6 +101,10 @@ void interpreter(String file) {
       PVector AC = C.copy().sub(A);
       PVector N = AB.cross(AC).normalize();
       tri.N = N.copy();
+      Matrix C_t = current_scene.stack.peek();
+      Matrix inv = C_t.invert();
+      tri.transformation = C_t;
+      tri.inverseTransformation = inv;
       if(accelerationList != null){
         accelerationList.add(tri);
       }else{
@@ -153,7 +163,7 @@ void interpreter(String file) {
       accelerationList = new ArrayList<Object>();
     }
     else if(token[0].equals("end_accel")){
-      println("Acceleration list has " + accelerationList.size() + " objects");
+      //println("Acceleration list has " + accelerationList.size() + " objects");
       BVH bvh = new BVH(accelerationList);
       current_scene.addObject(bvh);
       accelerationList = null;
@@ -208,7 +218,7 @@ IntersectionResult castRay(Ray r, ArrayList<Object> objects, int start, int end)
     }
   }
   if(final_ir == null) return null;
-  return new IntersectionResult(min_t, final_ir.c, final_ir.N, final_ir.hitpoint);
+  return new IntersectionResult(min_t, final_ir.c, final_ir.N.copy(), final_ir.hitpoint);
 }
 
 // return the color when shooting an eye ray from the origin
@@ -229,7 +239,7 @@ color getColor(int x, int y, Scene s, PVector origin){
   PVector N = intersection.N;
   //float min_t = intersection.t;
   color_c = intersection.c;
-  PVector P = intersection.hitpoint;
+  PVector P = intersection.hitpoint.copy();
   int surface_red = color_c >> 16 & 0xFF;
   int surface_green = color_c >> 8 & 0xFF;
   int surface_blue = color_c & 0XFF;
@@ -242,18 +252,17 @@ color getColor(int x, int y, Scene s, PVector origin){
     int light_red = (l.light_color >> 16) & 0xFF;
     int light_green = (l.light_color >> 8) & 0xFF;
     int light_blue = (l.light_color) & 0xFF;
-    float NDL = max(N.dot(L), 0);
+    float NDL = max(N.copy().dot(L), 0);
     Ray shadowRay = new Ray(P, l.position.copy().sub(P), "SHADOW");
-    //if(debug_flag)
-    //  println("Shadow ray: " + shadowRay.toString() + " to Light " + l.position + " with color " + colorStr(l.light_color));
     IntersectionResult shadowIntersection = castRay(shadowRay, s.objects, 0, s.objects.size() - 1);
-    if(shadowIntersection == null || shadowIntersection.t < 0.00001){
+    //if(true){
+    if(shadowIntersection == null || shadowIntersection.t < 0.001){
       c_r += surface_red * light_red * NDL / 255;
       c_g += surface_green * light_green * NDL / 255;
       c_b += surface_blue * light_blue * NDL / 255;
     }else{
       if(debug_flag){
-        println("\tShadowray & triangle intersect at: t = " + shadowIntersection.t + " on Color : " + colorStr(shadowIntersection.c) + "Surface normal: " + shadowIntersection.N); 
+        //println("\tShadowray & triangle intersect at: t = " + shadowIntersection.t + " on Color : " + colorStr(shadowIntersection.c) + "Surface normal: " + shadowIntersection.N); 
       }
       
     }

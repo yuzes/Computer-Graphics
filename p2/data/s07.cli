@@ -33,8 +33,10 @@ translate 0 0 -3
 
 surface  .8 .4 .4
 
+
 begin_accel
 read bun500.cli
+# read icos.cli
 end_accel
 
 render

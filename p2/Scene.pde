@@ -80,4 +80,8 @@ class IntersectionResult{
     this.N = N;
     this.hitpoint = p;
   }
+  
+  String toString(){
+    return "t = " + this.t + " color = " + colorStr(this.c) + " N = " + this. N + " Hitpoint = " + this.hitpoint; 
+  }
 }

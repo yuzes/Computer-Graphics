@@ -12,8 +12,11 @@ class Object implements Renderable{
     //Matrix invTransformation;
     AABB bbox;
     PVector center;
+    Matrix inverseTransformation;
+    Matrix transformation;
     Object() {
-        //this.invTransformation = new Matrix(4, 4);
+        this.inverseTransformation = new Matrix(4, 4);
+        this.transformation = new Matrix(4,4);
     }
     
     AABB getBbox(){
@@ -32,7 +35,7 @@ class Instance extends Object{
   color surface_color;
   
   Instance(Object obj) {
-    this(obj, new Matrix(4, 4), new Matrix(4,4), color(1,1,1));
+    this(obj, new Matrix(4,4), new Matrix(4,4), color(1,1,1));
   }
   
   Instance(Object obj, Matrix trans, Matrix inv, color c){
@@ -45,15 +48,15 @@ class Instance extends Object{
   @Override
   IntersectionResult intersectRay(Ray r){
     Ray r_trans = r.transform(this.inverseTransformation);
-    if(debug_flag)
-      println(r_trans.toString());
     IntersectionResult ir = this.obj.intersectRay(r_trans);
     if(ir == null) return null;
     ir.c = this.surface_color;
     PVector hit_rspace = r_trans.direction.copy().mult(ir.t).add(r_trans.origin);
     PVector hit_wspace = transformation.apply(hit_rspace, false);
-    if(debug_flag)
-      println("Hit point in world space: " + hit_wspace);
+    if(debug_flag){
+      println("Hit point in vector space: " + hit_rspace);
+      println("Hit point in world space: " + hit_wspace); 
+    }
     if(hit_wspace.z > -1.0) return null;
     PVector N_wspace = transformation.apply(ir.N, true);
     PVector d = r.direction;

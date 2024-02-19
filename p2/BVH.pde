@@ -2,12 +2,12 @@ class BVH extends Object{
   BVHNode root;
   
   BVH(ArrayList<Object> objects) {
-    this.root = new BVHNode(objects, 0, objects.size() - 1);
+    this.root = new BVHNode(objects, 0, objects.size() - 1, 0);
     this.bbox = this.root.bbox;
   }
   
   IntersectionResult intersectRay(Ray r){
-    return this.root.intersectRay(r); 
+    return this.root.intersectRayHelper(r, this.root);
   }
 }
 
@@ -17,24 +17,30 @@ class BVHNode extends Object{
   ArrayList<Object> objects;
   boolean isLeaf;
   int start, end; // the range of object that this BVHNode cover
+  int depth;
   
-  BVHNode(ArrayList<Object> objs, int start, int end){
+  BVHNode(ArrayList<Object> objs, int start, int end, int depth){
     this.objects = objs;
     this.start = start;
     this.end = end;
+    this.depth = depth;
     PVector min = new PVector(Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE);
     PVector max = min.copy().mult(-1);
     for(int i = start; i <= end; i++){
       Object obj = this.objects.get(i);
-      min.x = min(min.x, obj.bbox.min.x);
-      min.y = min(min.y, obj.bbox.min.y);
-      min.z = min(min.z, obj.bbox.min.z);
+      //println("Object[" + i + "]" + " type: " + className + " bbox: min = " + obj.bbox.min + " max = " + obj.bbox.max);
+      PVector objMin = obj.bbox.min.copy();
+      PVector objMax = obj.bbox.max.copy();
+      min.x = min(min.x, objMin.x);
+      min.y = min(min.y, objMin.y);
+      min.z = min(min.z, objMin.z);
       
-      max.x = max(max.x, obj.bbox.max.x);
-      max.y = max(max.y, obj.bbox.max.y);
-      max.z = max(max.z, obj.bbox.max.z);
+      max.x = max(max.x, objMax.x);
+      max.y = max(max.y, objMax.y);
+      max.z = max(max.z, objMax.z);
     }
-    this.bbox = new AABB(min,  max, color(1,1,1));
+    //println("Current BVH has node min = " + min + " max = " + max + " contains: object[" + start + "] to " + "object[" + end + "]" + " depth = " + depth);
+    this.bbox = new AABB(min,  max, color(random(0.5,1),random(0.5,1),1));
     if(end - start <= 2) {
       return;
     }
@@ -46,16 +52,16 @@ class BVHNode extends Object{
     int i = this.start;
     int j = this.end;
     while (i < j){
-        if (this.objects.get(i).center.array()[axis] < splitPos){
+        if (this.objects.get(i).center.copy().array()[axis] < splitPos){
           i++;
         }else{
           Collections.swap(this.objects, i, j);
           j--;
         }
     }
-    println("Construct new BVHNode start = " + start + " i = " + i + " j = " + j + " end = " + end);
-    this.left = new BVHNode(this.objects, start, i - 1);
-    this.right = new BVHNode(this.objects, i, end);
+    if(i == end || j == start) return;
+    this.left = new BVHNode(this.objects, this.start, i, depth + 1);
+    this.right = new BVHNode(this.objects, i+1, this.end, depth + 1);
   }
   
   IntersectionResult intersectRay(Ray r){
@@ -67,13 +73,27 @@ class BVHNode extends Object{
     //if intersect right return right
     //else return bbox
     if(node == null) return null;
-    IntersectionResult ir = this.bbox.intersectRay(r);
+    IntersectionResult ir = node.bbox.intersectRay(r);
     if(ir == null) return null;
     if(node.left == null && node.right == null){
-      return ir;
+      if(debug_flag){
+        println("[Depth" + node.depth + "] Debug intersectRayHelper");
+        println("\tbbox min: " + node.bbox.min + "bbox max: " + node.bbox.max);
+        println("\tNode contains object from " + node.start + " to " + node.end );
+      }
+      IntersectionResult objIr = castRay(r, node.objects, node.start, node.end);
+      return objIr;
     }
-    if(node.left != null) return intersectRayHelper(r, node.left);
-    return intersectRayHelper(r, node.right);
+    IntersectionResult left_ir = intersectRayHelper(r, node.left);
+    IntersectionResult right_ir = intersectRayHelper(r, node.right);
+    if(right_ir == null){
+      return left_ir; 
+    }else if(left_ir == null){
+      return right_ir; 
+    }
+    // both left and right has some result
+    if(left_ir.t < right_ir.t) return left_ir;
+    return right_ir;
   }
 
 }
