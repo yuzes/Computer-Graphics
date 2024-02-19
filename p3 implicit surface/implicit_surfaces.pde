@@ -3,6 +3,7 @@
 // for object rotation by mouse
 int mouseX_old = 0;
 int mouseY_old = 0;
+
 PMatrix3D rot_mat;
 
 // camera parameters
