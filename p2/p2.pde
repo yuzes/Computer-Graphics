@@ -34,6 +34,7 @@ void keyPressed() {
     case 'a': interpreter("s11.cli"); break;
     case 's': interpreter("s12.cli"); break;
     case 'd': interpreter("s13.cli"); break;
+    case 'q': interpreter("myscene.cli"); break;
   }
 }
 
