@@ -1,5 +1,7 @@
 // Triangle Mesh
 
+float h = 0.00001;
+
 ArrayList<Vertex> verts;
 ArrayList<Triangle> triangles;
 
@@ -56,9 +58,32 @@ void draw_surface()
     Vertex v3 = verts.get(t.v3);
     beginShape();
     // add "normal" command before each vertex to use per-vertex (smooth) normals
-    vertex (v1.pos.x, v1.pos.y, v1.pos.z);
-    vertex (v2.pos.x, v2.pos.y, v2.pos.z);
-    vertex (v3.pos.x, v3.pos.y, v3.pos.z);
+    if(normal_flag){
+      float dx1 = (implicit_func.getValue (v1.pos.x + h, v1.pos.y, v1.pos.z) - implicit_func.getValue (v1.pos.x - h, v1.pos.y, v1.pos.z)) / (2*h);
+      float dy1 = (implicit_func.getValue (v1.pos.x, v1.pos.y + h, v1.pos.z) - implicit_func.getValue (v1.pos.x, v1.pos.y - h, v1.pos.z)) / (2*h);
+      float dz1 = (implicit_func.getValue (v1.pos.x, v1.pos.y, v1.pos.z + h) - implicit_func.getValue (v1.pos.x, v1.pos.y, v1.pos.z - h)) / (2*h);
+      v1.normal = new PVector(dx1, dy1, dz1);
+      normal(v1.normal.x, v1.normal.y, v1.normal.z);
+      vertex (v1.pos.x, v1.pos.y, v1.pos.z);
+      
+      float dx2 = (implicit_func.getValue(v2.pos.x + h, v2.pos.y, v2.pos.z) - implicit_func.getValue(v2.pos.x - h, v2.pos.y, v2.pos.z)) / (2 * h);
+      float dy2 = (implicit_func.getValue(v2.pos.x, v2.pos.y + h, v2.pos.z) - implicit_func.getValue(v2.pos.x, v2.pos.y - h, v2.pos.z)) / (2 * h);
+      float dz2 = (implicit_func.getValue(v2.pos.x, v2.pos.y, v2.pos.z + h) - implicit_func.getValue(v2.pos.x, v2.pos.y, v2.pos.z - h)) / (2 * h);
+      v2.normal = new PVector(dx2, dy2, dz2);
+      normal(v2.normal.x, v2.normal.y, v2.normal.z);
+      vertex(v2.pos.x, v2.pos.y, v2.pos.z);
+      
+      float dx3 = (implicit_func.getValue(v3.pos.x + h, v3.pos.y, v3.pos.z) - implicit_func.getValue(v3.pos.x - h, v3.pos.y, v3.pos.z)) / (2 * h);
+      float dy3 = (implicit_func.getValue(v3.pos.x, v3.pos.y + h, v3.pos.z) - implicit_func.getValue(v3.pos.x, v3.pos.y - h, v3.pos.z)) / (2 * h);
+      float dz3= (implicit_func.getValue(v3.pos.x, v3.pos.y, v3.pos.z + h) - implicit_func.getValue(v3.pos.x, v3.pos.y, v3.pos.z - h)) / (2 * h);
+      v3.normal = new PVector(dx3, dy3, dz3);
+      normal(v3.normal.x, v3.normal.y, v3.normal.z);
+      vertex(v3.pos.x, v3.pos.y, v3.pos.z);
+    }else{
+      vertex (v1.pos.x, v1.pos.y, v1.pos.z);
+      vertex (v2.pos.x, v2.pos.y, v2.pos.z);
+      vertex (v3.pos.x, v3.pos.y, v3.pos.z); 
+    }
     endShape(CLOSE);
   }
 }

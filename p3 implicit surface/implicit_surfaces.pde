@@ -139,7 +139,54 @@ void keyPressed()
     set_implicit (a_sphere);
     isosurface();
   }
-  if (key == '2') {
+  if (key == '!') {
+    set_threshold (1.0);
+    set_implicit (flat_sphere);
+    isosurface();
+  }
+  if (key == '2'){
+    set_threshold(1.0);
+    set_implicit (blobby_sphere);
+    isosurface();
+  }
+  if (key == '@'){
+    
+  }
+  if (key == '3'){
+    
+  }
+  if (key == '#'){
+    
+  }
+  if (key == '4'){
+    
+  }
+  if (key == '$'){
+    
+  }
+  if (key == '5'){
+    
+  }
+  if (key == '%'){
+    
+  }
+  if (key == '6'){
+    
+  }
+  if (key == '^'){
+    
+  }
+  if (key == '7'){
+    
+  }
+  if (key == '&'){
+    
+  }
+  if (key == '8'){
+    
+  }
+  if (key == '9'){
+    
   }
 }
 
