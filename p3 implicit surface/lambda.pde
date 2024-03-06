@@ -4,6 +4,8 @@
 
 import java.lang.FunctionalInterface;
 
+
+
 // this is a functional interface that will let us define an implicit function
 @FunctionalInterface
 interface ImplicitInterface {
@@ -12,44 +14,42 @@ interface ImplicitInterface {
   float getValue(float x, float y, float z);
 }
 
-// Implicit function for a sphere at the origin.
-//
-// This may look like a function definition, but it is a lambda expression that we are
-// storing in the variable "a_sphere" using =. Note the -> and the semi-colon after the last }
-
-ImplicitInterface a_sphere = (x, y, z) -> {
-  float d = sqrt (x*x + y*y + z*z);
-  return d;
+ImplicitInterface implicit_torus = (x, y, z) -> {
+  PVector Q = new PVector(x, y, z);
+  float dist = distanceToTorus(Q, 0.8, 0.3);
+  return blobby_filter(dist, 0.8);
 };
 
-ImplicitInterface flat_sphere = (x, y, z) -> {
-  float d = sqrt(x*x + y*y*10 + z*z); 
-  return d;
+ImplicitInterface blobby_tori = (x, y, z) -> {
+  float blobbyness = 0.2;
+  PVector Q = new PVector(x, y, z);
+  PVector c = new PVector(-1.1,0,0);
+  float result = 0.0;
+  for(int i = 0; i < 3; i++){
+    float dist = distanceToTorus(PVector.sub(Q,c), 0.5, 0.15);
+    result += blobby_filter(dist, blobbyness);
+    c.x += 1.1;
+    PMatrix3D transformation = new PMatrix3D();
+    transformation.rotateX(radians(45));
+    Q = transformation.mult(Q, null);
+  }
+  return result;
 };
 
-ImplicitInterface blobby_sphere = (x, y, z) -> {
-   PVector c1 = new PVector(1, 0, 0);
-   PVector c2 = new PVector(-1, 0, 0);
-   float d1 = distance(new PVector(x, y, z), c1);
-   float d2 = distance(new PVector(x, y, z), c2);
-   float f1 = blob(d1);
-   float f2 = blob(d2);
-   return f1 + f2 - threshold;
-};
+float distanceToTorus(PVector Q, float R, float r) {
+    float x = Q.x;
+    float y = Q.y;
+    float z = Q.z;
 
-float Gaussian(float d){
-  return exp(-d * d);
-}
+    float distance = 0;
+    float torusEquation = (pow(x, 2) + pow(y, 2) + pow(z, 2) + pow(R, 2) - pow(r, 2));
+    torusEquation = pow(torusEquation, 2) - 4 * pow(R, 2) * (pow(x, 2) + pow(y, 2));
 
-float blob(float d){
-  float d2 = 1 - d * d;
-  float b = d2 * d2 * d2;
-  return b;
-}
+    if (torusEquation > 0) {
+        distance = sqrt(torusEquation); // Distance to the surface of the torus
+    } else {
+        distance = 0;
+    }
 
-float distance(PVector p1, PVector p2){
-  float dx = p2.x - p1.x;
-  float dy = p2.y - p1.y;
-  float dz = p2.z - p1.z;
-  return sqrt(dx * dx + dy * dy + dz * dz); 
+    return distance;
 }

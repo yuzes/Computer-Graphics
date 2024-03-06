@@ -65,7 +65,6 @@ void draw_surface()
       v1.normal = new PVector(dx1, dy1, dz1);
       normal(v1.normal.x, v1.normal.y, v1.normal.z);
       vertex (v1.pos.x, v1.pos.y, v1.pos.z);
-      
       float dx2 = (implicit_func.getValue(v2.pos.x + h, v2.pos.y, v2.pos.z) - implicit_func.getValue(v2.pos.x - h, v2.pos.y, v2.pos.z)) / (2 * h);
       float dy2 = (implicit_func.getValue(v2.pos.x, v2.pos.y + h, v2.pos.z) - implicit_func.getValue(v2.pos.x, v2.pos.y - h, v2.pos.z)) / (2 * h);
       float dz2 = (implicit_func.getValue(v2.pos.x, v2.pos.y, v2.pos.z + h) - implicit_func.getValue(v2.pos.x, v2.pos.y, v2.pos.z - h)) / (2 * h);
@@ -87,6 +86,7 @@ void draw_surface()
     endShape(CLOSE);
   }
 }
+
 
 // write triangles to a text file
 void write_triangles(String filename)

@@ -142,7 +142,6 @@ int VertexInterp (float isolevel, PVector p1, PVector p2, float valp1, float val
 {
   float t;
   PVector p = new PVector (0, 0, 0);
-
   if (abs(isolevel - valp1) < 0.00001)
      return (add_vertex (p1));
      
@@ -156,6 +155,7 @@ int VertexInterp (float isolevel, PVector p1, PVector p2, float valp1, float val
   p.x = p1.x + t * (p2.x - p1.x);
   p.y = p1.y + t * (p2.y - p1.y);
   p.z = p1.z + t * (p2.z - p1.z);
+  
   
   return (add_vertex (p));
 }

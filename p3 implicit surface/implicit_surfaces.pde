@@ -12,9 +12,14 @@ float camera_distance = camera_default;
 
 boolean edge_flag = false;      // draw the polygon edges?
 boolean normal_flag = false;   // use smooth normals during shading?
+boolean random_color_flag = false;
 
 // iso-surface threshold
 float threshold = 1.0;  
+
+
+PVector[] lineSegments = new PVector[10];
+color[] colors = new color[10];
 
 int timer;  // used to time parts of the code
 
@@ -145,39 +150,73 @@ void keyPressed()
     isosurface();
   }
   if (key == '2'){
-    set_threshold(1.0);
+    set_threshold(0.2);
     set_implicit (blobby_sphere);
     isosurface();
   }
   if (key == '@'){
-    
+    random_color_flag = true;
+    for (int i = 0; i < 10; i++) {
+      // Generate the first endpoint randomly
+      lineSegments[i] = new PVector(random(-1.5, 1.5), random(-1.5, 1.5), random(-1.5, 1.5));
+      colors[i] = color(int(random(0,255)),int(random(0,255)),int(random(0,255)));
+    }
+    set_threshold(0.2);
+    set_implicit(ten_blobbys);
+    isosurface();
   }
   if (key == '3'){
-    
+    set_threshold(0.5);
+    set_implicit (implicit_line);
+    isosurface();
   }
   if (key == '#'){
-    
+    set_threshold(0.4);
+    set_implicit (implicit_square);
+    isosurface();
   }
   if (key == '4'){
-    
+    set_threshold(0.8);
+    set_implicit (implicit_torus);
+    isosurface();
   }
   if (key == '$'){
-    
+    set_threshold(0.8);
+    set_implicit (blobby_tori);
+    isosurface();
   }
   if (key == '5'){
-    
+    set_threshold(1.7);
+    set_implicit (implicit_line_offset);
+    isosurface();
   }
   if (key == '%'){
-    
+    set_threshold(1.7);
+    set_implicit (implicit_line_twist);
+    isosurface();
   }
   if (key == '6'){
-    
+    x_min = -1.5;
+    x_max = 1.5;
+    k_1 = 0.3;
+    k_2 = 1;
+    set_threshold(1.7);
+    set_implicit (implicit_line_taper);
+    isosurface();
   }
   if (key == '^'){
-    
+    x_min = -1.5;
+    x_max = 1.5;
+    k_1 = 0.3;
+    k_2 = 1;
+    set_threshold(1.2);
+    set_implicit (implicit_line_twist_taper);
+    isosurface();
   }
   if (key == '7'){
-    
+    set_threshold (0.05);
+    set_implicit (intersection_sphere);
+    isosurface();
   }
   if (key == '&'){
     
