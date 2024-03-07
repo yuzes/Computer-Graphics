@@ -13,6 +13,7 @@ float camera_distance = camera_default;
 boolean edge_flag = false;      // draw the polygon edges?
 boolean normal_flag = false;   // use smooth normals during shading?
 boolean random_color_flag = false;
+boolean custom_flag = false;
 
 // iso-surface threshold
 float threshold = 1.0;  
@@ -126,13 +127,14 @@ void keyPressed()
     isosurface();
     return;
   }
+  if (key == 'n') {
+    normal_flag = !normal_flag;
+    return;
+  }
   
   random_color_flag = false;
   if (key == 'e') {
     edge_flag = !edge_flag;
-  }
-  if (key == 'n') {
-    normal_flag = !normal_flag;
   }
   if (key == 'r') {  // reset camera view and rotation
     rot_mat.reset();
@@ -241,7 +243,23 @@ void keyPressed()
     isosurface();
   }
   if (key == '0'){
-    
+    random_color_flag = true;
+    for (int i = 0; i < 10; i++) {
+      random_colors[i] = color(int(random(0,255)),int(random(0,255)),int(random(0,255)));
+    }
+    randomSpheres[0] = new PVector(0,-1,0);
+    randomSpheres[1] = new PVector(0,0,0);
+    randomSpheres[2] = new PVector(0,1,0);
+    randomSpheres[3] = new PVector(0,2,0);
+    randomSpheres[4] = new PVector(1,1,0);
+    randomSpheres[5] = new PVector(-1,1,0);
+    randomSpheres[6] = new PVector(1,-1,0);
+    randomSpheres[7] = new PVector(-1,-1,0);
+    randomSpheres[8] = new PVector(0,2,0);
+    randomSpheres[9] = new PVector(0,2,0);
+    set_threshold(0.2);
+    set_implicit(my_implicit_surface);
+    isosurface();
   }
 }
 

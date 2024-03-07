@@ -127,6 +127,10 @@ color getColor(float x, float y, float z){
   secondShortest = blobby_filter(secondShortest, 0.6);
   float total = shortest + secondShortest;
   float t = shortest / total;
+  color lerpC = lerpColor(random_colors[i1], random_colors[i2], 1-t);
+  if((lerpC >> 16 & 0xFF) < 1 && (lerpC >> 8 & 0xFF) < 1 && (lerpC & 0xFF) < 1) {
+    return color(250,250, 250);
+  }
   return lerpColor(random_colors[i1], random_colors[i2], 1-t);
 }
 
