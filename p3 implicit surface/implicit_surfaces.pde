@@ -18,8 +18,8 @@ boolean random_color_flag = false;
 float threshold = 1.0;  
 
 
-PVector[] lineSegments = new PVector[10];
-color[] colors = new color[10];
+PVector[] randomSpheres = new PVector[10];
+color[] random_colors = new color[10];
 
 int timer;  // used to time parts of the code
 
@@ -114,6 +114,20 @@ void keyPressed()
     return;
   }
   
+  if (key == ',') {  // decrease the grid resolution
+    if (gsize > 10) {
+      gsize -= 10;
+      isosurface();
+    }
+    return;
+  }
+  if (key == '.') {  // increase the grid resolution
+    gsize += 10;
+    isosurface();
+    return;
+  }
+  
+  random_color_flag = false;
   if (key == 'e') {
     edge_flag = !edge_flag;
   }
@@ -128,16 +142,6 @@ void keyPressed()
     String filename = "implicit_mesh.cli";
     write_triangles (filename);
     println ("wrote triangles to file: " + filename);
-  }
-  if (key == ',') {  // decrease the grid resolution
-    if (gsize > 10) {
-      gsize -= 10;
-      isosurface();
-    }
-  }
-  if (key == '.') {  // increase the grid resolution
-    gsize += 10;
-    isosurface();
   }
   if (key == '1') {
     set_threshold (1.0);
@@ -157,9 +161,8 @@ void keyPressed()
   if (key == '@'){
     random_color_flag = true;
     for (int i = 0; i < 10; i++) {
-      // Generate the first endpoint randomly
-      lineSegments[i] = new PVector(random(-1.5, 1.5), random(-1.5, 1.5), random(-1.5, 1.5));
-      colors[i] = color(int(random(0,255)),int(random(0,255)),int(random(0,255)));
+      randomSpheres[i] = new PVector(random(-1.5, 1.5), random(-1.5, 1.5), random(-1.5, 1.5));
+      random_colors[i] = color(int(random(0,255)),int(random(0,255)),int(random(0,255)));
     }
     set_threshold(0.2);
     set_implicit(ten_blobbys);
@@ -214,17 +217,30 @@ void keyPressed()
     isosurface();
   }
   if (key == '7'){
-    set_threshold (0.05);
+    set_threshold (0.1);
     set_implicit (intersection_sphere);
     isosurface();
   }
   if (key == '&'){
-    
+    set_threshold (0.1);
+    set_implicit (difference_sphere);
+    isosurface();
   }
   if (key == '8'){
-    
+    set_threshold(0.5);
+    morphing_t -= 0.1;
+    if(morphing_t < 0) morphing_t += 1;
+    set_implicit(morphing);
+    isosurface();
   }
   if (key == '9'){
+    set_threshold(0.5);
+    morphing_t += 0.1;
+    if(morphing_t > 1) morphing_t -= 1;
+    set_implicit(morphing);
+    isosurface();
+  }
+  if (key == '0'){
     
   }
 }

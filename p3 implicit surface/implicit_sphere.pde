@@ -31,7 +31,7 @@ ImplicitInterface ten_blobbys = (x, y, z) -> {
   PVector P = new PVector(x, y, z);
   float d_ps = 0.0;
   for(int i = 0; i < 10; i++){
-    PVector c = lineSegments[i];
+    PVector c = randomSpheres[i];
     float d = distance(P, c);
     d_ps += blobby_filter(d, 0.6);
   }
@@ -46,6 +46,17 @@ ImplicitInterface intersection_sphere = (x, y, z) -> {
   float d1 = distance(P, c1);
   float d2 = distance(P, c2);
   return min(blobby_filter(d1, 0.9),blobby_filter(d2, 0.9));
+};
+
+ImplicitInterface difference_sphere = (x, y, z) -> {
+  float dx = 2;
+  PVector P = new PVector(x, y, z);
+  PVector c1 = new PVector(0, 0, 0);
+  PVector c2 = new PVector(dx, 0, 0);
+  PVector c3 = new PVector(-dx, 0, 0);
+  float d1 = distance(P, c1);
+  float d2 = distance_lineSegment(c2, c3, P);
+  return max(2*threshold - blobby_filter(d1, 0.9), blobby_filter(d2, 0.45));
 };
 
 float blobby_pair(PVector P, PVector c1, PVector c2, float r){

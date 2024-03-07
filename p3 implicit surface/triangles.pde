@@ -64,29 +64,78 @@ void draw_surface()
       float dz1 = (implicit_func.getValue (v1.pos.x, v1.pos.y, v1.pos.z + h) - implicit_func.getValue (v1.pos.x, v1.pos.y, v1.pos.z - h)) / (2*h);
       v1.normal = new PVector(dx1, dy1, dz1);
       normal(v1.normal.x, v1.normal.y, v1.normal.z);
-      vertex (v1.pos.x, v1.pos.y, v1.pos.z);
+      shadeVertex(v1.pos.x, v1.pos.y, v1.pos.z);
       float dx2 = (implicit_func.getValue(v2.pos.x + h, v2.pos.y, v2.pos.z) - implicit_func.getValue(v2.pos.x - h, v2.pos.y, v2.pos.z)) / (2 * h);
       float dy2 = (implicit_func.getValue(v2.pos.x, v2.pos.y + h, v2.pos.z) - implicit_func.getValue(v2.pos.x, v2.pos.y - h, v2.pos.z)) / (2 * h);
       float dz2 = (implicit_func.getValue(v2.pos.x, v2.pos.y, v2.pos.z + h) - implicit_func.getValue(v2.pos.x, v2.pos.y, v2.pos.z - h)) / (2 * h);
       v2.normal = new PVector(dx2, dy2, dz2);
       normal(v2.normal.x, v2.normal.y, v2.normal.z);
-      vertex(v2.pos.x, v2.pos.y, v2.pos.z);
+      shadeVertex(v2.pos.x, v2.pos.y, v2.pos.z);
       
       float dx3 = (implicit_func.getValue(v3.pos.x + h, v3.pos.y, v3.pos.z) - implicit_func.getValue(v3.pos.x - h, v3.pos.y, v3.pos.z)) / (2 * h);
       float dy3 = (implicit_func.getValue(v3.pos.x, v3.pos.y + h, v3.pos.z) - implicit_func.getValue(v3.pos.x, v3.pos.y - h, v3.pos.z)) / (2 * h);
       float dz3= (implicit_func.getValue(v3.pos.x, v3.pos.y, v3.pos.z + h) - implicit_func.getValue(v3.pos.x, v3.pos.y, v3.pos.z - h)) / (2 * h);
       v3.normal = new PVector(dx3, dy3, dz3);
       normal(v3.normal.x, v3.normal.y, v3.normal.z);
-      vertex(v3.pos.x, v3.pos.y, v3.pos.z);
+      shadeVertex(v3.pos.x, v3.pos.y, v3.pos.z);
     }else{
-      vertex (v1.pos.x, v1.pos.y, v1.pos.z);
-      vertex (v2.pos.x, v2.pos.y, v2.pos.z);
-      vertex (v3.pos.x, v3.pos.y, v3.pos.z); 
+      shadeVertex (v1.pos.x, v1.pos.y, v1.pos.z);
+      shadeVertex (v2.pos.x, v2.pos.y, v2.pos.z);
+      shadeVertex (v3.pos.x, v3.pos.y, v3.pos.z); 
     }
     endShape(CLOSE);
   }
 }
 
+
+void shadeVertex(float x, float y, float z) {
+  if(random_color_flag){
+    color c = getColor(x, y, z);
+    float r = (c >> 16 & 0xFF);
+    float g = (c >> 8 & 0xFF);
+    float b = (c & 0xFF);
+    fill(r, g, b);
+    vertex (x, y, z);
+  }else{
+    vertex (x, y, z);
+  }
+}
+
+color getColor(float x, float y, float z){
+  float[] distances = new float[10];
+  int i1 = -1;
+  int i2 = -1; 
+  float shortest = Float.MAX_VALUE; 
+  float secondShortest = Float.MAX_VALUE;
+  for(int i = 0; i < 10; i++){
+    distances[i] = distance(new PVector(x, y, z), randomSpheres[i]);
+    float d = blobby_filter(distances[i], 0.6);
+    if(abs(d - threshold) <= 1 * (1.0 / gsize)){
+      return random_colors[i];
+    }
+    if (distances[i] < shortest) {
+        secondShortest = shortest;
+        i2 = i1;
+        shortest = distances[i];
+        i1 = i;
+    } else if (distances[i] < secondShortest) {
+        secondShortest = distances[i];
+        i2 = i;
+    }
+  }
+  shortest = blobby_filter(shortest, 0.6);
+  secondShortest = blobby_filter(secondShortest, 0.6);
+  float total = shortest + secondShortest;
+  float t = shortest / total;
+  return lerpColor(random_colors[i1], random_colors[i2], 1-t);
+}
+
+String colorStr(color c){
+  int r = (c >> 16) & 0xFF;
+  int g = (c >> 8) & 0xFF;
+  int b = c & 0xFF; 
+  return r + " " + g + " " + b;
+}
 
 // write triangles to a text file
 void write_triangles(String filename)
