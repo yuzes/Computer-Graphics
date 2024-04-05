@@ -19,6 +19,7 @@ int current_eid = 0;
 
 //
 Mesh current_mesh  = null;
+Mesh prev_mesh = null;
 
 void setup()
 {
@@ -91,6 +92,22 @@ void draw()
   popMatrix();
 }
 
+void visualize_normal(){
+  if(current_mesh == null) return;
+  for(Face f : current_mesh.faces){
+    Edge e = current_mesh.edges.get(f.eid);
+    Edge next_e = current_mesh.edge_next(e);
+    Vertex v_src = current_mesh.vertices.get(e.vid);
+    Vertex v_dest = current_mesh.vertices.get(next_e.vid);
+    float scale = PVector.dist(v_src.p, v_dest.p)/40;
+    for (int i = 0; i < 6; i++) {
+      PVector offset = f.N.copy().mult(i * scale);
+      PVector position = f.center.copy().add(offset);
+      drawSphere(position, scale, color(0, 30 * i, 30 * i));
+    } 
+  }
+}
+
 void visualize_edge(PVector source, PVector dest, Face f){
   PVector face_normal = f.N.copy();
   PVector direction = PVector.sub(dest, source);
@@ -104,7 +121,7 @@ void visualize_edge(PVector source, PVector dest, Face f){
   drawSphere(p1.add(offset), scale*0.9, color(0,0,255));
   drawSphere(p2.add(offset), scale*1.1, color(0,0,255));
   drawSphere(p3.add(offset), scale*1.3, color(0,0,255));
-  
+  drawSphere(f.center, scale, color(255,0,255));
 }
 
 void drawSphere(PVector position, float r, color c){
@@ -164,6 +181,9 @@ void keyPressed()
     rot_mat.reset();
     camera_distance = camera_default;
   }
+  else if (key == '0') {
+    read_mesh ("cuber.ply");
+  }
   else if (key == '1') {
     read_mesh ("octa.ply");
   }
@@ -212,13 +232,16 @@ void keyPressed()
       current_eid = current_mesh.edges.get(current_eid).next;
     }
   }
-  else if (key == 'd') {      
-    current_mesh = current_mesh.dual();
+  else if (key == 'd') {     
+    if(current_mesh != null) current_mesh = current_mesh.dual();
   }
   else if (key == 'g') {      
-    
+    if(current_mesh != null) current_mesh.midpoint_subdivision();
   }
   else if (key == 'c') {      
+    if(current_mesh != null){
+      current_mesh.catmull_clark_subdivision();
+    }
     
   }
   else if (key == 'r') {      
