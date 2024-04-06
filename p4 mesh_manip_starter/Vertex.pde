@@ -8,6 +8,15 @@ class Vertex{
     return "Vid = " + this.id + " " + this.p;
   }
   
+  Vertex copy(){
+    Vertex copy = new Vertex();
+    copy.p = this.p.copy();
+    copy.N = this.N.copy();
+    copy.id = this.id;
+    copy.eid = this.eid;
+    return copy;
+  }
+  
 }
 
 class IntPair {

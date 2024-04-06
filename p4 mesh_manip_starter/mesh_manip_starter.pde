@@ -245,13 +245,13 @@ void keyPressed()
     
   }
   else if (key == 'r') {      
-    
+    current_mesh.add_noise();
   }
   else if (key == 'l') {      
-    
+    current_mesh.laplacian_smoothing(40, 0.6);
   }
   else if (key == 't') {      
-    
+    current_mesh.taubin_smoothing(40, 0.6307,-0.67315);
   }
   
 

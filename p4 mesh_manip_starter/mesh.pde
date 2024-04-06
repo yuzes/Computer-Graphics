@@ -361,6 +361,7 @@ class Mesh {
     return new_verts;
   }
   
+  // refer cc.jpg for visualization of this function
   void divide_surface_cc(Face f){
     Vertex f_center = new Vertex();
     f_center.p = f.center.copy();
@@ -434,6 +435,52 @@ class Mesh {
       Edge e0 = edge_next(n_fep);
       e0.prev = n_fep.id;
       p_e.next = fep.opposite;
+    }
+  }
+  
+  void add_noise(){
+    for(Vertex v : this.vertices){
+      Edge e = this.edges.get(v.eid);
+      Face f = this.faces.get(e.fid);
+      v.p.add(f.N.copy().mult(random(-0.1,0.1)));
+    }
+  }
+  
+  void taubin_smoothing(int iter, float lambda, float mu) {
+    for(int it = 0; it < iter; it++){
+      shrink_inflate(lambda);
+      shrink_inflate(mu);
+    }
+  }
+  
+  void shrink_inflate(float k){
+    ArrayList<Vertex> temp_vertices = new ArrayList<Vertex>(this.vertices.size());
+    for(int i = 0; i < this.vertices.size(); i++){
+      Vertex v = this.vertices.get(i);
+      ArrayList<Vertex> neighbors = new ArrayList<Vertex>();
+      Edge e = this.edges.get(v.eid);
+      Edge current_e = e;
+      do{
+        neighbors.add(this.vertices.get(edge_next(current_e).vid));
+        current_e = edge_swing(current_e);
+      }while(current_e.id != e.id);
+      
+      PVector vcent_p = new PVector(0,0,0);
+      for(Vertex n : neighbors) vcent_p.add(n.p);
+      vcent_p.div(neighbors.size());
+      PVector dvp = vcent_p.sub(v.p);
+      Vertex newV = v.copy();
+      newV.p = v.p.copy().add(dvp.mult(k));
+      temp_vertices.add(newV);
+    }
+    for(int i = 0; i < this.vertices.size(); i++){
+      this.vertices.get(i).p = temp_vertices.get(i).p;
+    }  
+  }
+  
+  void laplacian_smoothing(int iter, float lambda){
+    for(int it = 0; it < iter; it++){
+      shrink_inflate(lambda);
     }
   }
 }
