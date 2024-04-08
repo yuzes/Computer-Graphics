@@ -172,10 +172,10 @@ class Mesh {
       divideFace(this.faces.get(i));
     }
     
-    for(Vertex v : this.vertices) {
-      float mag = v.p.mag();
-      v.p = v.p.copy().div(mag);
-    }
+    //for(Vertex v : this.vertices) {
+    //  float mag = v.p.mag();
+    //  v.p = v.p.copy().div(mag);
+    //}
     
     this.setNormals();
     this.setCenters();

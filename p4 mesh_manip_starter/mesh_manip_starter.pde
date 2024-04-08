@@ -61,10 +61,10 @@ void draw()
       
       for(Face face : current_mesh.faces){
         Edge edge = current_mesh.edges.get(face.eid);
-        if(random_color_flag){
-          color c = face.c;
-          fill((c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF);
-        }
+        //if(random_color_flag){
+        //  color c = face.c;
+        //  fill((c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF);
+        //}
         beginShape();
         if(!per_vertex_normal){
           normal(face.N.x, face.N.y, face.N.z); 
@@ -79,14 +79,14 @@ void draw()
         }
         endShape(CLOSE);
       }
-      if(visualize_edge){
-          Edge current_e = current_mesh.edges.get(current_eid);
-          Face current_f = current_mesh.faces.get(current_e.fid);
-          Vertex v_src = current_mesh.vertices.get(current_e.vid);
-          Edge next_e = current_mesh.edges.get(current_e.next);
-          Vertex v_dest = current_mesh.vertices.get(next_e.vid);
-          visualize_edge(v_src.p, v_dest.p, current_f);
-      }
+      //if(visualize_edge){
+      //    Edge current_e = current_mesh.edges.get(current_eid);
+      //    Face current_f = current_mesh.faces.get(current_e.fid);
+      //    Vertex v_src = current_mesh.vertices.get(current_e.vid);
+      //    Edge next_e = current_mesh.edges.get(current_e.next);
+      //    Vertex v_dest = current_mesh.vertices.get(next_e.vid);
+      //    visualize_edge(v_src.p, v_dest.p, current_f);
+      //}
   }
     
   popMatrix();
