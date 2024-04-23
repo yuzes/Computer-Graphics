@@ -85,7 +85,6 @@ void interpreter(String file) {
                              {float(token[2])},
                              {float(token[3])},
                              {1.0f}});
-      PVector point = new PVector(float(token[1]), float(token[2]),float(token[3]));
       Matrix C = current_scene.stack.peek();
       Matrix transform_point = C.mult(point_m);
       PVector vertex = new PVector(transform_point.get(0,0), transform_point.get(1,0), transform_point.get(2,0));
@@ -133,7 +132,7 @@ void interpreter(String file) {
       int diff = new_timer - timer;
       float seconds = diff / 1000.0;
       println ("timer = " + seconds);
-    }
+    } 
     //
     // new material for p2
     
@@ -168,6 +167,23 @@ void interpreter(String file) {
       current_scene.addObject(bvh);
       accelerationList = null;
     }
+    else if(token[0].equals("sphere")){
+      
+    }
+    else if(token[0].equals("rays_per_pixel")){
+      
+    }
+    else if(token[0].equals("moving_object")){
+      
+    }
+    else if(token[0].equals("disk_light")){
+      
+    }
+    else if(token[0].equals("glossy")){
+      
+    }
+    
+    
     else if (token[0].equals("#")) {
       // comment (ignore)
     }
