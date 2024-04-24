@@ -21,20 +21,25 @@ void setup() {
 void keyPressed() {
   reset_scene();
   switch(key) {
-    case '1': interpreter("s01.cli"); break;
-    case '2': interpreter("s02.cli"); break;
-    case '3': interpreter("s03.cli"); break;
-    case '4': interpreter("s04.cli"); break;
-    case '5': interpreter("s05.cli"); break;
-    case '6': interpreter("s06.cli"); break;
-    case '7': interpreter("s07.cli"); break;
-    case '8': interpreter("s08.cli"); break;
-    case '9': interpreter("s09.cli"); break;
-    case '0': interpreter("s10.cli"); break;
-    case 'a': interpreter("s11.cli"); break;
-    case 's': interpreter("s12.cli"); break;
-    case 'd': interpreter("s13.cli"); break;
-    case 'q': interpreter("myscene.cli"); break;
+    case '1': interpreter("s01a.cli"); break;
+    case '2': interpreter("s02a.cli"); break;
+    case '3': interpreter("s03a.cli"); break;
+    case '4': interpreter("s04a.cli"); break;
+    case '5': interpreter("s05a.cli"); break;
+    case '6': interpreter("s06a.cli"); break;
+    case '7': interpreter("s07a.cli"); break;
+    case '8': interpreter("s08a.cli"); break;
+    case '9': interpreter("s09a.cli"); break;
+    
+    case '!': interpreter("s01a.cli"); break;
+    case '@': interpreter("s02a.cli"); break;
+    case '#': interpreter("s03a.cli"); break;
+    case '$': interpreter("s04a.cli"); break;
+    case '%': interpreter("s05a.cli"); break;
+    case '^': interpreter("s06a.cli"); break;
+    case '&': interpreter("s07a.cli"); break;
+    case '*': interpreter("s08a.cli"); break;
+    case '(': interpreter("s09a.cli"); break;
   }
 }
 
@@ -169,7 +174,7 @@ void interpreter(String file) {
     }
     else if(token[0].equals("sphere")){
       PVector center = new PVector(float(token[2]),float(token[3]),float(token[4])); 
-      current_scene.addObject(new Sphere(center, float(token[1]))); 
+      current_scene.addObject(new Sphere(center, float(token[1]), surface_color)); 
     }
     else if(token[0].equals("rays_per_pixel")){
       current_scene.rays_per_pixel = int(token[1]);
@@ -183,9 +188,13 @@ void interpreter(String file) {
       PVector direction = new PVector(float(token[5]),float(token[6]),float(token[7]));
       color light_color = color(float(token[8]),float(token[9]),float(token[10]));
       DiskLight d_light = new DiskLight(center, radius, direction, light_color);
+      current_scene.lights.add(d_light);
+    }
+    else if(token[0].equals("lens")){
+      
     }
     else if(token[0].equals("glossy")){
-      
+      surface_color = color(float(token[1]), float(token[2]), float(token[3]));
     }
     
     
