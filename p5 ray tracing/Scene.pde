@@ -4,12 +4,14 @@ class Scene {
   
   int fov;
   String name;
+  int rays_per_pixel;
   ArrayList<Triangle> triangles;
   color background_color;
   ArrayList<Light> lights;
   MatrixStack stack;
   ArrayList<Object> objects;
   HashMap<String, Object> instances;
+  Object lastObject;
   
   Scene() {
     this.triangles = new ArrayList<Triangle>();
@@ -41,15 +43,6 @@ class Scene {
 }
 
 
-class Light{
-  PVector position;
-  color light_color;
-  
-  Light(PVector p, color c){
-    this.position = p.copy();
-    this.light_color = c;
-  }
-}
 
 
 // An object that encapsulate information about a ray & triangle intersection, 

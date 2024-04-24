@@ -168,16 +168,21 @@ void interpreter(String file) {
       accelerationList = null;
     }
     else if(token[0].equals("sphere")){
-      
+      PVector center = new PVector(float(token[2]),float(token[3]),float(token[4])); 
+      current_scene.addObject(new Sphere(center, float(token[1]))); 
     }
     else if(token[0].equals("rays_per_pixel")){
-      
+      current_scene.rays_per_pixel = int(token[1]);
     }
     else if(token[0].equals("moving_object")){
       
     }
     else if(token[0].equals("disk_light")){
-      
+      PVector center = new PVector(float(token[1]),float(token[2]),float(token[3]));
+      float radius = float(token[4]);
+      PVector direction = new PVector(float(token[5]),float(token[6]),float(token[7]));
+      color light_color = color(float(token[8]),float(token[9]),float(token[10]));
+      DiskLight d_light = new DiskLight(center, radius, direction, light_color);
     }
     else if(token[0].equals("glossy")){
       
