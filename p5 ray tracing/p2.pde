@@ -174,7 +174,12 @@ void interpreter(String file) {
     }
     else if(token[0].equals("sphere")){
       PVector center = new PVector(float(token[2]),float(token[3]),float(token[4])); 
-      current_scene.addObject(new Sphere(center, float(token[1]), surface_color)); 
+      Sphere sph = new Sphere(center, float(token[1]), surface_color);
+      Matrix C_t = current_scene.stack.peek();
+      Matrix inv = C_t.invert();
+      sph.transformation = C_t;
+      sph.inverseTransformation = inv;
+      current_scene.addObject(sph);
     }
     else if(token[0].equals("rays_per_pixel")){
       current_scene.rays_per_pixel = int(token[1]);
@@ -263,7 +268,10 @@ color getColor(int x, int y, Scene s, PVector origin){
   float z_p = -1;
   Ray r = new Ray(origin, new PVector(x_p, y_p, z_p), "EYE");
   IntersectionResult intersection = castRay(r, s.objects, 0, s.objects.size() - 1);
-  if(intersection == null) return s.background_color;
+  if(intersection == null){
+    if(debug_flag) println("No intersection");
+    return s.background_color;
+  }
   color color_c = color(0,0,0);
   PVector N = intersection.N;
   color_c = intersection.c;
@@ -283,7 +291,6 @@ color getColor(int x, int y, Scene s, PVector origin){
     float NDL = max(N.copy().dot(L), 0);
     Ray shadowRay = new Ray(P, l.position.copy().sub(P), "SHADOW");
     IntersectionResult shadowIntersection = castRay(shadowRay, s.objects, 0, s.objects.size() - 1);
-    //if(true){
     if(shadowIntersection == null || shadowIntersection.t < 0.00001){
       c_r += surface_red * light_red * NDL / 255;
       c_g += surface_green * light_green * NDL / 255;

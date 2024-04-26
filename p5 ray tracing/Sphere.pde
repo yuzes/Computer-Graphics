@@ -15,6 +15,11 @@ class Sphere extends Object {
   }
   
   @Override
+  String toString() {
+    return "Sphere " + center + " " + radius;
+  }
+  
+  @Override
   IntersectionResult intersectRay(Ray r){
     PVector oc = r.origin.copy().sub(this.center);
     float A = r.direction.dot(r.direction);

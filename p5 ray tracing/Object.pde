@@ -26,6 +26,10 @@ class Object implements Renderable{
     IntersectionResult intersectRay(Ray r){
       return null; 
     }
+    
+    String toString() {
+      return null;
+    }
 }
 
 class Instance extends Object{
