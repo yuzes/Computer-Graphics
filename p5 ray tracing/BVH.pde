@@ -40,7 +40,9 @@ class BVHNode extends Object{
       max.z = max(max.z, objMax.z);
     }
     //println("Current BVH has node min = " + min + " max = " + max + " contains: object[" + start + "] to " + "object[" + end + "]" + " depth = " + depth);
-    this.bbox = new AABB(min,  max, color(random(0.5,1),random(0.5,1),1));
+    Material m = new Material();
+    m.kd = color(random(0.5,1),random(0.5,1),1);
+    this.bbox = new AABB(min,  max, m);
     if(end - start <= 2) {
       return;
     }

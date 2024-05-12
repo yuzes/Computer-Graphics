@@ -3,12 +3,12 @@ float EPS = 0.0001f;
 class AABB extends Object{
   PVector min;
   PVector max;
-  color surface_color;
+  Material material;
   
-  AABB(PVector min, PVector max, color surface_color){
+  AABB(PVector min, PVector max, Material m){
     this.min= min;
     this.max = max;
-    this.surface_color = surface_color;
+    this.material = m;
     this.center = min.copy().add(max).mult(0.5);
   }
   
@@ -71,6 +71,6 @@ class AABB extends Object{
     //  println(r.type + " Intersection result: t = " + t + " color = " + colorStr(this.surface_color) + " N = " + N);
     //  println("Min = " + min + " Max = " + max + " Intersection = " + intersect);
     //}
-    return new IntersectionResult(t, this.surface_color, N, r.direction.copy().mult(t).add(r.origin));  
+    return new IntersectionResult(t, this.material, N, r.direction.copy().mult(t).add(r.origin));  
   }
 }

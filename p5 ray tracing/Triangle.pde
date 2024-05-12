@@ -1,23 +1,25 @@
 class Triangle extends Object{
   ArrayList<PVector> vertices;
-  color surface_color;
   PVector N; // surface normal
+  Material material;
   
   Triangle(PVector v1, PVector v2, PVector v3) {
+     super();
      this.vertices = new ArrayList<PVector> ();
      this.vertices.add(v1);
      this.vertices.add(v2);
      this.vertices.add(v3);
      this.center = v1.copy().add(v2).add(v3).mult(0.33333f);
-     
+     this.material = new Material();
   }
   
   Triangle() {
+    super();
     this.vertices = new ArrayList<PVector> ();
+    this.material = new Material();
   }
   
   Triangle(Triangle other){
-    this.surface_color = other.surface_color;
     this.vertices = new ArrayList<PVector>();
     if(other.N != null)
       this.N = other.N.copy();
@@ -34,26 +36,17 @@ class Triangle extends Object{
       bboxMax.y = max(bboxMax.y, v.y);
       bboxMax.z = max(bboxMax.z, v.z);
     }
-    this.bbox = new AABB(bboxMin.copy(), bboxMax.copy(), color(1,random(0,1),1));
+    this.bbox = new AABB(bboxMin.copy(), bboxMax.copy(), new Material(color(1,random(0,1),1)));
     PVector v1 = this.vertices.get(0);
     PVector v2 = this.vertices.get(1);
     PVector v3 = this.vertices.get(2);
     this.center = v1.copy().add(v2).add(v3).mult(0.33333f);
+    this.material = other.material;
   }
   
   
   @Override
   IntersectionResult intersectRay(Ray r){
-    //Ray r_trans = r.transform(this.inverseTransformation);
-    //float t = this.rayTriangleIntersection(r_trans);
-    //if(t == 0.0) return null;
-    //PVector hit_rspace = r_trans.direction.copy().mult(t).add(r_trans.origin);
-    //PVector hit_wspace = transformation.apply(hit_rspace, false);
-    //if(hit_wspace.z > -1.0) return null;
-    ////PVector N_wspace = transformation.apply(ir.N, true);
-    //PVector d = r.direction;
-    //float t_wspace = (PVector.sub(hit_wspace, r.origin).dot(d)) / (d.dot(d));
-    //return new IntersectionResult(t_wspace, this.surface_color, this.N, r.direction.copy().mult(t).add(r.origin));
     float t = this.rayTriangleIntersection(r);
     if(t == 0.0) return null;
     PVector P = r.direction.copy().mult(t).add(r.origin);
@@ -61,7 +54,7 @@ class Triangle extends Object{
     //  println("\t\tIntersection point: " + P);
     //if(P.z > -1) return null;
     if (P.copy().dot(this.N) > 0 && r.type == "EYE") this.N.mult(-1);
-    return new IntersectionResult(t, this.surface_color, this.N.copy(), P.copy());
+    return new IntersectionResult(t, this.material, this.N.copy(), P.copy());
   }
   
   float rayTriangleIntersection(Ray r){
@@ -86,22 +79,12 @@ class Triangle extends Object{
     PVector P = r.direction.copy().mult(t).add(r.origin);
     //if(P.z > -1) return 0.0;
     if(insideTriangle(A, B, C, this.N, P)){
-      if(debug_flag){
-        println("Hit point " + P + " inside triangle: " + colorStr(this.surface_color) + " Triangle Normal: " + this.N);
-        println("O + t*d = " + r.origin + " + " + t + " * " + r.direction + " = " + r.origin.copy().add(r.direction.copy().mult(t)));
-      }
       return t;
     }else {
       return 0.0;
     }
   }
-  
-  // return true if point is behind view plane
-  // view plane is always perp to r's direction
-  boolean behindViewPlane(PVector point, Ray r){
-    return true;
-  }
-  
+
   // return true if P is inside triangle ABC
   boolean insideTriangle(PVector A, PVector B, PVector C, PVector N, PVector P){
     boolean side1 = side(A, B, N, P);

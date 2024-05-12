@@ -2,12 +2,13 @@ class Sphere extends Object {
   PVector center;
   float radius;
   color surface_color;
+  Material material;
   
-  Sphere(PVector c, float r, color surface_color){
+  Sphere(PVector c, float r){
+    super();
     this.center = c;
     this.radius = r;
-    this.bbox = new AABB(c.copy().add(new PVector(r,r,r)), c.copy().sub(new PVector(r,r,r)), color(1,1,1));
-    this.surface_color = surface_color;  
+    this.bbox = new AABB(c.copy().add(new PVector(r,r,r)), c.copy().sub(new PVector(r,r,r)), new Material(color(1,1,1)));
 }
   
   AABB getBbox(){
@@ -32,6 +33,6 @@ class Sphere extends Object {
     float t = min(t1, t2);
     if(t < 0) return null;
     PVector p = r.direction.copy().mult(t).add(r.origin);
-    return new IntersectionResult(t, this.surface_color, p.copy().sub(this.center).normalize(), p);
+    return new IntersectionResult(t, this.material, p.copy().sub(this.center).normalize(), p);
   }
 }

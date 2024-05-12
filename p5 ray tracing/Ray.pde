@@ -7,7 +7,7 @@ class Ray {
   Ray(PVector origin, PVector direction, String type) {
     if(type == "EYE") direction.normalize();
     this.origin = origin.copy();
-    this.direction = direction.copy();
+    this.direction = direction.normalize().copy();
     this.type = type;
   }
   

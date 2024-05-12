@@ -8,7 +8,7 @@ boolean debug_flag = false;
 
 Scene debug_scene = null;
 Scene current_scene = null;
-color surface_color = color(0,0,0);
+Material current_material = new Material();
 int timer;  // global variable
 ArrayList<Object> accelerationList;
 
@@ -31,15 +31,17 @@ void keyPressed() {
     case '8': interpreter("s08a.cli"); break;
     case '9': interpreter("s09a.cli"); break;
     
-    case '!': interpreter("s01a.cli"); break;
-    case '@': interpreter("s02a.cli"); break;
-    case '#': interpreter("s03a.cli"); break;
-    case '$': interpreter("s04a.cli"); break;
-    case '%': interpreter("s05a.cli"); break;
-    case '^': interpreter("s06a.cli"); break;
-    case '&': interpreter("s07a.cli"); break;
-    case '*': interpreter("s08a.cli"); break;
-    case '(': interpreter("s09a.cli"); break;
+    case '!': interpreter("s01b.cli"); break;
+    case '@': interpreter("s02b.cli"); break;
+    case '#': interpreter("s03b.cli"); break;
+    case '$': interpreter("s04b.cli"); break;
+    case '%': interpreter("s05b.cli"); break;
+    case '^': interpreter("s06b.cli"); break;
+    case '&': interpreter("s07b.cli"); break;
+    case '*': interpreter("s08b.cli"); break;
+    case '(': interpreter("s09b.cli"); break;
+    
+    case 'q': interpreter("implicit_mesh.cli"); break;
   }
 }
 
@@ -79,10 +81,11 @@ void interpreter(String file) {
       current_scene.lights.add(current_light);
     }
     else if (token[0].equals("surface")) {
-      surface_color = color(float(token[1]), float(token[2]), float(token[3]));
+      current_material = new Material();
+      current_material.kd = color(float(token[1]), float(token[2]), float(token[3]));
     }    
     else if (token[0].equals("begin")) {
-      buffer.surface_color = surface_color;
+      buffer.material = current_material;
     }
     else if (token[0].equals("vertex")) {
       Matrix point_m = new Matrix(new float[][] {
@@ -125,6 +128,18 @@ void interpreter(String file) {
       float degree = float(token[1]);
       PVector axis = new PVector(float(token[2]), float(token[3]), float(token[4]));
       current_scene.stack.rotate(degree, axis);
+    }else if(token[0].equals("rotatex")){
+      float degree = float(token[1]);
+      PVector axis = new PVector(1,0,0);
+      current_scene.stack.rotate(degree, axis);
+    }else if(token[0].equals("rotatey")){
+      float degree = float(token[1]);
+      PVector axis = new PVector(0,1,0);
+      current_scene.stack.rotate(degree, axis);
+    }else if(token[0].equals("rotatez")){
+      float degree = float(token[1]);
+      PVector axis = new PVector(0,0,1);
+      current_scene.stack.rotate(degree, axis);
     }else if(token[0].equals("translate")){
       current_scene.stack.translate(float(token[1]), float(token[2]), float(token[3]));
     }else if(token[0].equals("scale")){
@@ -132,11 +147,11 @@ void interpreter(String file) {
     }else if (token[0].equals("render")) {
       timer = millis();
       draw_scene(current_scene);   // this is where you should perform the scene rendering
-      current_scene = null;
+      //current_scene = null;
       int new_timer = millis();
       int diff = new_timer - timer;
       float seconds = diff / 1000.0;
-      println ("timer = " + seconds);
+      println ("timer = " + seconds + " sec");
     } 
     //
     // new material for p2
@@ -148,7 +163,7 @@ void interpreter(String file) {
       PVector max = new PVector(float(token[4]),float(token[5]),float(token[6]));
       PVector min_transform = C.apply(min, false);
       PVector max_transform = C.apply(max, false);
-      AABB bbox = new AABB(min_transform, max_transform, surface_color);
+      AABB bbox = new AABB(min_transform, max_transform, current_material);
       current_scene.addObject(bbox);
     }
     else if(token[0].equals("named_object")){
@@ -160,7 +175,7 @@ void interpreter(String file) {
       Object obj = current_scene.getInstance(token[1]);
       Matrix C = current_scene.stack.peek();
       Matrix inv = C.invert();
-      Instance objInstance = new Instance(obj, C, inv, surface_color);
+      Instance objInstance = new Instance(obj, C, inv, current_material);
       current_scene.addObject(objInstance);
     }
     else if(token[0].equals("begin_accel")){
@@ -173,19 +188,24 @@ void interpreter(String file) {
       accelerationList = null;
     }
     else if(token[0].equals("sphere")){
-      PVector center = new PVector(float(token[2]),float(token[3]),float(token[4])); 
-      Sphere sph = new Sphere(center, float(token[1]), surface_color);
-      Matrix C_t = current_scene.stack.peek();
-      Matrix inv = C_t.invert();
-      sph.transformation = C_t;
-      sph.inverseTransformation = inv;
+      Matrix center_m = new Matrix(new float[][] {
+                             {float(token[2])},
+                             {float(token[3])},
+                             {float(token[4])},
+                             {1.0f}});
+      Matrix C = current_scene.stack.peek();
+      Matrix transform_center = C.mult(center_m);
+      PVector center = new PVector(transform_center.get(0,0), transform_center.get(1,0), transform_center.get(2,0));
+      Sphere sph = new Sphere(center, float(token[1]));
+      sph.material = current_material;
       current_scene.addObject(sph);
     }
     else if(token[0].equals("rays_per_pixel")){
       current_scene.rays_per_pixel = int(token[1]);
     }
     else if(token[0].equals("moving_object")){
-      
+      Object lastObject = current_scene.objects.get(current_scene.objects.size() - 1);
+      lastObject.speed = new PVector(float(token[1]), float(token[2]), float(token[3]));
     }
     else if(token[0].equals("disk_light")){
       PVector center = new PVector(float(token[1]),float(token[2]),float(token[3]));
@@ -196,10 +216,16 @@ void interpreter(String file) {
       current_scene.lights.add(d_light);
     }
     else if(token[0].equals("lens")){
-      
+      current_scene.lens_radius = float(token[1]);
+      current_scene.focal_length = float(token[2]);
     }
     else if(token[0].equals("glossy")){
-      surface_color = color(float(token[1]), float(token[2]), float(token[3]));
+      current_material = new Material();
+      current_material.kd = color(float(token[1]), float(token[2]), float(token[3]));
+      current_material.ks = color(float(token[4]), float(token[5]), float(token[6]));
+      current_material.spec_pow = int(token[7]);
+      current_material.k_refl = float(token[8]);
+      current_material.gloss_radius = float(token[9]);
     }
     
     
@@ -214,6 +240,7 @@ void interpreter(String file) {
 
 void reset_scene() {
   // reset your scene variables here
+  current_scene = null;
 }
 
 // This is where you should put your code for creating eye rays and tracing them.
@@ -222,12 +249,7 @@ void draw_scene(Scene s) {
   debug_flag = false;
   for(int y = 0; y < height; y++) {
     for(int x = 0; x < width; x++) {
-      
-      // Maybe set debug flag true for ONE pixel.
-      // Have your routines (like ray/triangle intersection) 
-      // print information when this flag is set.
-      PVector eyePosition = new PVector(0,0,0);
-      color color_c = getColor(x, y, s, eyePosition);
+      color color_c = getColor(x, y, s);
       set (x, y, color_c);                   // make a tiny rectangle to fill the pixel
     }
   }
@@ -239,9 +261,12 @@ void draw_scene(Scene s) {
 IntersectionResult castRay(Ray r, ArrayList<Object> objects, int start, int end) {
   float min_t = Float.MAX_VALUE;
   IntersectionResult final_ir = null;
+  float motion_offset = -random(0,1);
   for(int i = start; i <= end; i++) {
     Object obj = objects.get(i);
-    IntersectionResult ir = obj.intersectRay(r);
+    PVector new_origin = r.origin.copy().add(PVector.mult(obj.speed.copy(), motion_offset));
+    Ray dr = new Ray(new_origin, r.direction.copy(), r.type);
+    IntersectionResult ir = obj.intersectRay(dr);
     if(ir == null) continue;
     float t = ir.t;
     if(t <= 0 || t > min_t) {
@@ -253,64 +278,134 @@ IntersectionResult castRay(Ray r, ArrayList<Object> objects, int start, int end)
     }
   }
   if(final_ir == null) return null;
-  return new IntersectionResult(min_t, final_ir.c, final_ir.N.copy(), final_ir.hitpoint);
+  return new IntersectionResult(min_t, final_ir.m, final_ir.N.copy(), final_ir.hitpoint);
 }
 
 // return the color when shooting an eye ray from the origin
-color getColor(int x, int y, Scene s, PVector origin){
+color getColor(int x, int y, Scene s){
   // create and cast an eye ray on pixel (x, y) in order to calculate the pixel color
   if(debug_flag){
     println("Start debugging " + s.name); 
   }
   float k = tan(radians(s.fov*0.5));
-  float x_p = (x - width/2) * 2 * k / width;
-  float y_p = (height/2 - y) * 2 * k / height;
-  float z_p = -1;
-  Ray r = new Ray(origin, new PVector(x_p, y_p, z_p), "EYE");
+  int final_color_r = 0;
+  int final_color_g = 0;
+  int final_color_b = 0;
+  for(int i = 0; i < s.rays_per_pixel; i++){
+    float angle = random(0, TWO_PI);
+  
+    // Convert polar coordinates to Cartesian coordinates
+    float r = sqrt(random(0, 1)) * current_scene.lens_radius;
+    float dx = r * cos(angle);
+    float dy = r * sin(angle);
+    
+    PVector O_lens = new PVector(dx,dy,0);
+    float rx = s.rays_per_pixel > 1 ? random(0,1) : 0;
+    float ry = s.rays_per_pixel > 1 ? random(0,1) : 0;
+    float jx = x + rx;
+    float jy = y + ry;
+    float x_p = (jx - width/2) * 2 * k / width;
+    float y_p = (height/2 - jy) * 2 * k / height;
+    float z_p = -1;
+    PVector direction;
+    if(current_scene.focal_length == -1) {
+      direction = new PVector(x_p, y_p, z_p); 
+    }else{
+      PVector dest = new PVector(current_scene.focal_length * x_p, current_scene.focal_length * y_p, -current_scene.focal_length);
+      direction = dest.copy().sub(O_lens);
+    }
+    color color_ray = getColorByRay(s, new Ray(O_lens, direction, "EYE"));
+    final_color_r += (color_ray >> 16) & 0xFF;
+    final_color_g += (color_ray >> 8) & 0xFF;
+    final_color_b += (color_ray) & 0xFF;
+  }
+  final_color_r /= s.rays_per_pixel;
+  final_color_g /= s.rays_per_pixel;
+  final_color_b /= s.rays_per_pixel;
+  return color(final_color_r, final_color_g, final_color_b);
+}
+
+color getColorByRay(Scene s, Ray r) {
   IntersectionResult intersection = castRay(r, s.objects, 0, s.objects.size() - 1);
   if(intersection == null){
-    if(debug_flag) println("No intersection");
     return s.background_color;
   }
-  color color_c = color(0,0,0);
+  float RDN = r.direction.copy().dot(intersection.N);
+  PVector refl_direction = r.direction.copy().sub(intersection.N.copy().mult(2*RDN));
+  float fuzz_x = random(-1, 1);
+  float fuzz_y = random(-1, 1);
+  float fuzz_z = random(-1, 1);
+  PVector fuzz_factor = new PVector(fuzz_x, fuzz_y, fuzz_z);
+  fuzz_factor.normalize().mult(intersection.m.gloss_radius);
+  refl_direction.add(fuzz_factor);
+  color refl_color = getColorByRay(s, new Ray(intersection.hitpoint.copy(), refl_direction.normalize(), "EYE"));
+  float refl_r = intersection.m.k_refl * ((refl_color >> 16) & 0xFF);
+  float refl_g = intersection.m.k_refl * ((refl_color >> 8) & 0xFF);
+  float refl_b = intersection.m.k_refl * ((refl_color) & 0xFF);
+  
+  color kd = intersection.m.kd;
+  color ks = intersection.m.ks;
   PVector N = intersection.N;
-  color_c = intersection.c;
   PVector P = intersection.hitpoint.copy();
-  int surface_red = color_c >> 16 & 0xFF;
-  int surface_green = color_c >> 8 & 0xFF;
-  int surface_blue = color_c & 0XFF;
-  float c_r = 0;
-  float c_g = 0;
-  float c_b = 0;
+  int kdr = kd >> 16 & 0xFF;
+  int kdg = kd >> 8 & 0xFF;
+  int kdb = kd & 0XFF;
+  int ksr = ks >> 16 & 0xFF;
+  int ksg = ks >> 8 & 0xFF;
+  int ksb = ks & 0XFF;
+  float diffuse_r = 0;
+  float diffuse_g = 0;
+  float diffuse_b = 0;
+  float specular_r = 0;
+  float specular_g = 0;
+  float specular_b = 0;
+  PVector v = r.direction.mult(-1).normalize();
   for(Light l : s.lights){
-    //PVector light_position_transform = s.stack.peek().invert().apply(l.position, false);
     PVector L = l.position.copy().sub(P).normalize();
+    PVector H = PVector.add(L, v).normalize();
     int light_red = (l.light_color >> 16) & 0xFF;
     int light_green = (l.light_color >> 8) & 0xFF;
     int light_blue = (l.light_color) & 0xFF;
     float NDL = max(N.copy().dot(L), 0);
-    Ray shadowRay = new Ray(P, l.position.copy().sub(P), "SHADOW");
+    float NDH = max(pow(H.dot(N), intersection.m.spec_pow), 0);
+    Ray shadowRay = getShadowRay(l, P);
     IntersectionResult shadowIntersection = castRay(shadowRay, s.objects, 0, s.objects.size() - 1);
     if(shadowIntersection == null || shadowIntersection.t < 0.00001){
-      c_r += surface_red * light_red * NDL / 255;
-      c_g += surface_green * light_green * NDL / 255;
-      c_b += surface_blue * light_blue * NDL / 255;
+      diffuse_r += kdr * light_red * NDL / 255;
+      diffuse_g += kdg * light_green * NDL / 255;
+      diffuse_b += kdb * light_blue * NDL / 255;
+      specular_r += ksr * light_red * NDH / 255;
+      specular_g += ksg * light_green * NDH / 255;
+      specular_b += ksb * light_blue * NDH / 255;
     }else{
-      if(debug_flag){
-        //println("\tShadowray & triangle intersect at: t = " + shadowIntersection.t + " on Color : " + colorStr(shadowIntersection.c) + "Surface normal: " + shadowIntersection.N); 
-      }
       
     }
   }
-  color_c = color(c_r, c_g, c_b);
-  return color_c;
+  return color(diffuse_r + specular_r + refl_r, 
+               diffuse_g + specular_g + refl_g,  
+               diffuse_b + specular_b + refl_b);
 }
 
-String colorStr(color c){
-  int r = (c >> 16) & 0xFF;
-  int g = (c >> 8) & 0xFF;
-  int b = c & 0xFF; 
-  return r + " " + g + " " + b;
+Ray getShadowRay(Light light, PVector origin) {
+  // Generate a random radius within the disk
+  if(light instanceof DiskLight) {
+    DiskLight dl = (DiskLight) light;
+    float angle = random(0, TWO_PI); // Random angle for polar coordinates
+    float r = sqrt(random(0, 1)) * dl.radius; // Random radius for uniform distribution
+    float x = r * cos(angle);
+    float y = r * sin(angle);
+    PVector normal = dl.direction.copy().normalize();
+    PVector tangent = normal.cross(new PVector(0, 0, 1)); 
+    if (tangent.mag() == 0) {
+      tangent = new PVector(1, 0, 0);
+    }
+    tangent.normalize();
+    PVector bitangent = normal.cross(tangent);
+    PVector point = tangent.mult(x).add(bitangent.mult(y)).add(dl.position);
+    return new Ray(origin, point.copy().sub(origin), "EYE");
+  }else{
+    return new Ray(origin, light.position.copy().sub(origin), "EYE"); 
+  }
 }
 
 
@@ -318,8 +413,7 @@ String colorStr(color c){
 void mousePressed() {
   println ("\nYou pressed the mouse at " + mouseX + " " + mouseY);
   if(debug_scene != null){
-    PVector eyePosition = new PVector(0,0,0);
-    getColor(mouseX, mouseY, debug_scene, eyePosition);
+    getColor(mouseX, mouseY, debug_scene);
   }
 }
 

@@ -12,6 +12,8 @@ class Scene {
   ArrayList<Object> objects;
   HashMap<String, Object> instances;
   Object lastObject;
+  float lens_radius;
+  float focal_length;
   
   Scene() {
     this.triangles = new ArrayList<Triangle>();
@@ -19,6 +21,9 @@ class Scene {
     this.lights = new ArrayList<Light>();
     this.objects = new ArrayList<Object>();
     this.instances = new HashMap<>();
+    this.rays_per_pixel = 1;
+    this.lens_radius = 0; 
+    this.focal_length = -1;
   }
   
   void addObject(Object o){
@@ -42,9 +47,6 @@ class Scene {
   }
 }
 
-
-
-
 // An object that encapsulate information about a ray & triangle intersection, 
 class RayTriangleIntersection{
   float t;
@@ -63,18 +65,18 @@ class RayTriangleIntersection{
 // N: surface normal of hit point
 class IntersectionResult{
   float t;
-  color c;
+  Material m;
   PVector N;
   PVector hitpoint;
   
-  IntersectionResult(float t, color c, PVector N, PVector p){
+  IntersectionResult(float t, Material m, PVector N, PVector p){
     this.t = t;
-    this.c = c;
+    this.m = m;
     this.N = N;
     this.hitpoint = p;
   }
   
   String toString(){
-    return "t = " + this.t + " color = " + colorStr(this.c) + " N = " + this. N + " Hitpoint = " + this.hitpoint; 
+    return "t = " + this.t + " color = " + colorStr(this.m.kd) + " N = " + this. N + " Hitpoint = " + this.hitpoint; 
   }
 }
